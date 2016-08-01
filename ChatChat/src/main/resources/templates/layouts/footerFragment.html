@@ -1,0 +1,154 @@
+<footer th:fragment="footer">
+
+    <div class="container">
+
+        <!-- Footer Widgets
+            ============================================= -->
+        <div class="footer-widgets-wrap clearfix">
+
+            <div class="col_half">
+
+                <div class="widget clearfix">
+
+                    <img th:src="@{/images/footer-widget-logo.png}" alt="" class="footer-logo" />
+
+                    <p th:text="#{ui.home.content.advertisment}"></p>
+
+                    <div class="clearfix" th:style="'padding: 10px 0; background: url(' + @{/images/world-map.png} + ') no-repeat center center;'">
+                        <div class="col_half">
+                            <address class="nobottommargin">
+                                <abbr th:title="#{ui.footer.contact.title}" style="display: inline-block;margin-bottom: 7px;"><strong th:text="#{ui.footer.contact.title}"></strong></abbr><br />
+                                <span th:text="#{ui.common.contact.address}"></span><br />
+                                <span th:text="#{ui.common.contact.shop}"></span><br />
+                            </address>
+                        </div>
+                        <div class="col_half col_last">
+                            <abbr th:title="#{ui.footer.contact.tel}"><strong th:text="#{ui.footer.contact.tel}"></strong>&nbsp;:&nbsp;</abbr><span th:text="#{ui.common.contact.tel}"></span><br />
+                            <abbr th:title="#{ui.footer.contact.mobile}"><strong th:text="#{ui.footer.contact.mobile}"></strong>&nbsp;:&nbsp;</abbr><span th:text="#{ui.common.contact.mobile}"></span><br />
+                            <abbr th:title="#{ui.footer.contact.email}"><strong th:text="#{ui.footer.contact.email}"></strong>&nbsp;:&nbsp;</abbr><span th:text="#{ui.common.contact.email}"></span>
+                        </div>
+                    </div>
+
+                    <a href="#" class="social-icon si-small si-rounded topmargin-sm si-facebook">
+                        <i class="icon-facebook"></i>
+                        <i class="icon-facebook"></i>
+                    </a>
+
+                    <a href="#" class="social-icon si-small si-rounded topmargin-sm si-twitter">
+                        <i class="icon-twitter"></i>
+                        <i class="icon-twitter"></i>
+                    </a>
+
+                    <a href="#" class="social-icon si-small si-rounded topmargin-sm si-gplus">
+                        <i class="icon-gplus"></i>
+                        <i class="icon-gplus"></i>
+                    </a>
+
+                </div>
+
+            </div>
+
+            <div class="col_one_fourth">
+
+                <div class="widget clearfix">
+                    <h4 th:text="#{ui.footer.recent-post.title}"></h4>
+
+                    <div id="post-list-footer">
+                        <div class="spost clearfix">
+                            <div class="entry-image hidden-sm">
+                                <a href="#"><img class="img-circle" th:src="@{/images/magazine/small/1.jpg}" alt="" /></a>
+                            </div>
+                            <div class="entry-c">
+                                <div class="entry-title">
+                                    <h4><a href="#">Lorem ipsum dolor sit amet, consectetur</a></h4>
+                                </div>
+                                <ul class="entry-meta">
+                                    <li>10th July 2014</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="spost clearfix">
+                            <div class="entry-image hidden-sm">
+                                <a href="#"><img class="img-circle" th:src="@{/images/magazine/small/2.jpg}" alt="" /></a>
+                            </div>
+                            <div class="entry-c">
+                                <div class="entry-title">
+                                    <h4><a href="#">Elit Assumenda vel amet dolorum quasi</a></h4>
+                                </div>
+                                <ul class="entry-meta">
+                                    <li>10th July 2014</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="spost clearfix">
+                            <div class="entry-image hidden-sm">
+                                <a href="#"><img class="img-circle" th:src="@{/images/magazine/small/3.jpg}" alt="" /></a>
+                            </div>
+                            <div class="entry-c">
+                                <div class="entry-title">
+                                    <h4><a href="#">Debitis nihil placeat, illum est nisi</a></h4>
+                                </div>
+                                <ul class="entry-meta">
+                                    <li>10th July 2014</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="col_one_fourth col_last">
+
+                <div class="widget quick-contact-widget clearfix">
+
+                    <h4 th:text="#{ui.footer.inquiry.form.text.title}"></h4>
+
+                    <div class="quick-contact-form-result"></div>
+
+                    <form id="quick-contact-form" name="quick-contact-form" action="include/quickcontact.php" method="post" class="quick-contact-form nobottommargin">
+
+                        <div class="form-process"></div>
+
+                        <div class="input-group divcenter">
+                            <span class="input-group-addon"><i class="icon-user"></i></span>
+                            <input type="text" class="required form-control input-block-level" id="quick-contact-form-name" name="quick-contact-form-name" value="" th:placeholder="#{ui.footer.inquiry.form.placeholder.name}" />
+                        </div>
+                        <div class="input-group divcenter">
+                            <span class="input-group-addon"><i class="icon-email2"></i></span>
+                            <input type="text" class="required form-control email input-block-level" id="quick-contact-form-email" name="quick-contact-form-email" value="" th:placeholder="#{ui.footer.inquiry.form.placeholder.email}" />
+                        </div>
+                        <textarea class="required form-control input-block-level short-textarea" id="quick-contact-form-message" name="quick-contact-form-message" rows="4" cols="30" th:placeholder="#{ui.footer.inquiry.form.placeholder.message}"></textarea>
+                        <input type="text" class="hidden" id="quick-contact-form-botcheck" name="quick-contact-form-botcheck" value="" />
+                        <button type="submit" id="quick-contact-form-submit" name="quick-contact-form-submit" class="btn btn-danger nomargin" value="submit" th:text="#{ui.footer.inquiry.form.button.send}"></button>
+
+                    </form>
+
+                </div>
+
+            </div>
+
+        </div><!-- .footer-widgets-wrap end -->
+    </div>
+
+    <!-- Copyrights
+    ============================================= -->
+    <div id="copyrights">
+
+        <div class="container clearfix">
+
+            <div class="col_full nobottommargin center">
+                <div class="copyrights-menu copyright-links clearfix">
+                    <a href="#">Home</a>/<a href="#">About</a>/<a href="#">Features</a>/<a href="#">Portfolio</a>/<a href="#">FAQs</a>/<a href="#">Contact</a>
+                </div>
+                Copyrights &copy; 2016 All Rights Reserved by hmlee.
+            </div>
+
+        </div>
+
+    </div><!-- #copyrights end -->
+
+</footer>

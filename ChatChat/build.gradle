@@ -1,0 +1,165 @@
+group 'com.hmlee.chatchat'
+version '1.0.0-SNAPSHOT'
+
+/*============================================================================================================*/
+/* Gradle Plugin 설정
+/*============================================================================================================*/
+/*
+빌드 스크립트가 외부 플러그인에 의존적일 때 buildscript 사용한다
+- 현재 프로젝트 빌드 시 repositories에 포함된 dependencies를 빌드 스크립트에서 사용하겠다는 의미
+- 여기에서는 gradle에서 spring-boot 빌드가 가능하도록 spring-boot 플러그인을 외부 라이브러리를 사용하겠다는 의미
+*/
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath("org.springframework.boot:spring-boot-gradle-plugin:1.3.7.RELEASE")
+    }
+}
+
+apply plugin: 'spring-boot'
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+apply plugin: 'eclipse-wtp'
+apply plugin: 'war'
+
+/*============================================================================================================*/
+/* 변수 선언
+/*============================================================================================================*/
+ext {
+    javaVersion = "1.8"
+    springBootVersion = "1.3.7.RELEASE"
+    thymeleafExtrasSpringSecurityVersion = "2.1.2.RELEASE"
+    h2databaseVersion = "1.4.191"
+    servletVersion = "3.1"
+    mysqlConnectorVersion = "5.1.38"
+}
+
+sourceCompatibility = javaVersion
+targetCompatibility = javaVersion
+
+/*============================================================================================================*/
+/* 빌드 설정
+/*============================================================================================================*/
+
+buildDir = 'target'
+
+war {
+    baseName = 'ROOT'
+    archiveName = "${baseName}.${extension}"
+}
+
+/*============================================================================================================*/
+/* Repository 설정
+/*============================================================================================================*/
+repositories {
+    mavenCentral()
+}
+
+/*============================================================================================================*/
+/* 실행 환경 설정
+/*============================================================================================================*/
+configurations.all {
+    resolutionStrategy {
+        eachDependency {
+            if (it.requested.group == 'org.apache.tomcat.embed') {
+                it.useVersion '8.0.32'
+            }
+        }
+    }
+}
+
+configurations {
+    providedRuntime
+}
+
+bootRun {
+    addResources = true
+    systemProperties System.properties
+}
+
+/*============================================================================================================*/
+/* 의존성 설정
+/*============================================================================================================*/
+dependencies {
+    // Back-End
+    providedRuntime("org.springframework.boot:spring-boot-starter-tomcat:${springBootVersion}")
+
+    compile("org.springframework.boot:spring-boot-starter-web:${springBootVersion}")
+    compile("org.springframework.boot:spring-boot-starter-thymeleaf:${springBootVersion}")
+    compile("org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}")
+    compile("org.springframework.boot:spring-boot-starter-security:${springBootVersion}")
+    compile("org.springframework.boot:spring-boot-starter-mail:${springBootVersion}")
+    compile("org.springframework.boot:spring-boot-devtools")
+
+    compile("org.thymeleaf.extras:thymeleaf-extras-springsecurity4:${thymeleafExtrasSpringSecurityVersion}")
+    compile("mysql:mysql-connector-java:${mysqlConnectorVersion}")
+    compile("org.apache.commons:commons-lang3:3.4")
+    compile("commons-codec:commons-codec:1.10")
+    compile("com.github.darrachequesne:spring-data-jpa-datatables:2.1")
+    compile("com.h2database:h2:${h2databaseVersion}")
+
+    // Front-End
+    compile 'org.webjars.bower:jquery:1.11.3'
+    compile 'org.webjars.bower:bootstrap:3.3.6'
+    compile 'org.webjars.bower:jquery-validation:1.14.0'
+    compile 'org.webjars.bower:jquery-i18n-properties:1.2.2'
+    compile 'org.webjars.bower:Chart.js:1.0.2'
+    compile 'org.webjars.bower:magnific-popup:1.0.0'
+    compile 'org.webjars.bower:animate.css:3.5.1'
+
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+/*============================================================================================================*/
+/* 프로젝트 설정
+/*============================================================================================================*/
+// 프로젝트 기본 디렉토리 구조 생성 task
+task initSrc << {
+    project.sourceSets*.allSource.srcDirTrees.flatten().dir.each { dir ->
+        dir.mkdirs()
+    }
+}
+
+// 소스 인코딩 지정
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+/*============================================================================================================*/
+/* Eclipse 관련 설정
+/*============================================================================================================*/
+tasks.eclipse.dependsOn cleanEclipse
+tasks.eclipse.dependsOn initSrc
+
+eclipse {
+    classpath {
+        downloadSources = true
+        defaultOutputDir = file("${buildDir}/classes/main")
+    }
+    wtp {
+        component {
+            contextPath = project.name // 원하는 contextPath 지정. 단, 빈 컨텍스트패스는 '/' 로 지정
+        }
+        facet {
+            facet name: 'jst.web', version: servletVersion // Servlet Spec Version 지정
+            facet name: 'jst.java', version: javaVersion // Java Version 지정, 1.7 ...
+        }
+    }
+}
+
+// 테스트 소스 Output Dir 변경
+eclipse.classpath.file.whenMerged { cp ->
+    def testSrcs = cp.entries.findAll {
+        it instanceof org.gradle.plugins.ide.eclipse.model.SourceFolder &&
+                it.path.startsWith("src/test/")
+    }
+
+    testSrcs.each {
+        // 멀티 프로젝트에서는 꼭 project.relativePath 로 호출해야 한다.
+        // 안그러면 Root 프로젝트에 대한 상대경로가 지정됨면서 하위 모듈의 프로젝트이름이 이중으로 들어감.
+        it.output = project.relativePath("${buildDir}/classes/test")
+        it.exported = false // Deployment Assembly에서 제외
+    }
+    // 중복 엔트리 삭제. gradle eclipse를 두 번이상 실행하면 test 관련 디렉토리가 중복 생성된다.
+    cp.entries.unique()
+}

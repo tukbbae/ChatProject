@@ -1,0 +1,98 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout" layout:decorator="/layouts/basicLayout">
+<head>
+    <script th:inline="javascript" type="text/javascript">
+        /*<![CDATA[*/
+        $(function() {
+            // 폼 검증
+            $("form").validate({
+                rules : {
+                    username : {
+                        required : true,
+                        maxlength : 20
+                    },
+                    password : {
+                        required : true
+                    }
+                },
+                messages : {
+                    username : {
+                        required : jQuery.i18n.prop("validate.login.username.required"),
+                        maxlength : jQuery.i18n.prop("validate.login.username.maxlength")
+                    },
+                    password : {
+                        required : jQuery.i18n.prop("validate.login.password.required")
+                    }
+                },
+                errorElement : "span",
+                errorPlacement : function(error, element) {
+                    error.insertAfter(element);
+                    error.css("float", "right");
+                    error.css("color", "red");
+                    error.css("font-weight", "bold");
+                }
+            });
+        });
+        /*]]>*/
+    </script>
+</head>
+<body>
+<div layout:fragment="wrapper">
+    <!-- Content
+		============================================= -->
+    <section id="content">
+
+        <div class="content-wrap nopadding">
+
+            <div class="section nopadding nomargin" style="width: 100%; height: 100%; position: absolute; left: 0; top: 0; background: #444;"></div>
+
+            <div class="section nobg full-screen nopadding nomargin">
+                <div class="container vertical-middle divcenter clearfix">
+
+                    <div class="row center">
+                        <a th:href="@{/}"><img th:src="@{/images/logo-dark.png}" alt="Canvas Logo" /></a>
+                    </div>
+
+                    <div class="panel panel-default divcenter noradius noborder" style="max-width: 400px;">
+                        <div class="panel-body" style="padding: 40px;">
+                            <form sec:authorize="isAnonymous()" id="login-form" name="login-form" class="nobottommargin" th:action="@{/cms/login}" method="post">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <h3>Login to your Account</h3>
+                                <div th:if="${error.isPresent()}" class="style-msg errormsg">
+                                    <div class="sb-msg">
+                                        <button type="button" class="close" data-dismiss="alert" aria-hidden="true"><i class="icon-remove"></i></button>
+                                        <span th:utext="${failureMessage}"></span>
+                                        <div th:if="${askAdmin}" class="text-right">
+                                            <p />
+                                            <a id="askAdmin" href="#" th:text="#{ui.login.label.askAdmin}"></a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col_full">
+                                    <label for="username">Username:</label>
+                                    <input type="text" id="username" name="username" value="" class="form-control not-dark" required="required" />
+                                </div>
+
+                                <div class="col_full">
+                                    <label for="password">Password:</label>
+                                    <input type="password" id="password" name="password" value="" class="form-control not-dark" required="required" />
+                                </div>
+
+                                <div class="col_full nobottommargin">
+                                    <button class="button button-3d button-black nomargin" id="login-form-submit" name="login-form-submit" value="login" type="submit">Login</button>
+                                    <a href="#" class="fright">Forgot Password?</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="row center dark"><small>Copyrights &copy; All Rights Reserved by Canvas Inc.</small></div>
+
+                </div>
+            </div>
+
+        </div>
+
+    </section><!-- #content end -->
+</div>
+</body>
+</html>

@@ -1,0 +1,47 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout" layout:decorator="/layouts/basicLayout">
+<head>
+</head>
+<body class="stretched">
+<div layout:fragment="wrapper">
+
+    <!-- Header
+    ============================================= -->
+    <header th:include="layouts/headerFragment :: header" id="header" class="transparent-header full-header" data-sticky-class="not-dark"></header><!-- #header end -->
+
+    <!-- Page Title
+		============================================= -->
+    <section id="page-title">
+
+        <div class="container clearfix">
+            <h1 th:text="#{ui.search.page.label.title}"></h1>
+            <ol class="breadcrumb">
+                <li><a th:href="@{/}" th:text="#{ui.common.navigation.main.home}"></a></li>
+                <li class="active" th:text="#{ui.search.page.label.breadcrumb}"></li>
+            </ol>
+        </div>
+
+    </section><!-- #page-title end -->
+
+    <!-- Content
+    ============================================= -->
+    <section id="content">
+
+        <div class="content-wrap">
+
+            <div class="container clearfix">
+
+                <gcse:searchresults-only></gcse:searchresults-only>
+
+            </div>
+
+        </div>
+
+    </section><!-- #content end -->
+
+    <!-- Footer
+        ============================================= -->
+    <footer th:include="layouts/footerFragment :: footer" id="footer" class="dark"></footer><!-- #footer end -->
+
+</div>
+</body>
+</html>

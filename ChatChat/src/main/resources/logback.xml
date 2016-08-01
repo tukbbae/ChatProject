@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ############################################################################# -->
+<!-- ## Log Level Order (TRACE < DEBUG < INFO < WARN < ERROR) -->
+<!-- ## Level.ALL : The ALL is used to turn on all logging. -->
+<!-- ## Level.OFF : The OFF is used to turn off logging. -->
+<!-- ############################################################################# -->
+<configuration>
+
+    <contextListener class="ch.qos.logback.classic.jul.LevelChangePropagator">
+        <resetJUL>true</resetJUL>
+    </contextListener>
+
+    <!-- To enable JMX Management -->
+    <jmxConfigurator />
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <withJansi>true</withJansi>
+        <encoder>
+            <pattern>%-47(%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread]) %highlight(%-6level) %-50(%cyan(%logger{15})) - %msg %n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="${logging.level}">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+</configuration>

@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en-US" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout">
+<head>
+
+    <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+    <meta name="author" content="KyeongjinKim" />
+
+    <!-- Stylesheets
+    ============================================= -->
+    <link href="http://fonts.googleapis.com/css?family=Lato:300,400,400italic,600,700|Raleway:300,400,500,600,700|Crete+Round:400italic" rel="stylesheet" type="text/css" />
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/3.3.6/dist/css/bootstrap.css}" type="text/css" />
+    <link rel="stylesheet" th:href="@{/style.css}" type="text/css" />
+    <link rel="stylesheet" th:href="@{css/swiper.css}" type="text/css" />
+    <link rel="stylesheet" th:href="@{/css/dark.css}" type="text/css" />
+    <link rel="stylesheet" th:href="@{/css/font-icons.css}" type="text/css" />
+    <link rel="stylesheet" th:href="@{/webjars/animate.css/3.5.1/animate.css}" type="text/css" />
+    <link rel="stylesheet" th:href="@{/webjars/magnific-popup/1.0.0/dist/magnific-popup.css}" type="text/css" />
+
+    <link rel="stylesheet" th:href="@{/css/responsive.css}" type="text/css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!--[if lt IE 9]>
+        <script src="http://css3-mediaqueries-js.googlecode.com/svn/trunk/css3-mediaqueries.js"></script>
+    <![endif]-->
+
+    <!-- Document Title
+    ============================================= -->
+    <title>Chat Project.</title>
+
+    <!-- External JavaScripts
+    ============================================= -->
+    <script type="text/javascript" th:src="@{/webjars/jquery/1.11.3/dist/jquery.min.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/jquery-validation/1.14.0/dist/jquery.validate.min.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/jquery-validation/1.14.0/dist/additional-methods.min.js}"></script>
+    <script type="text/javascript" th:src="@{/webjars/jquery-i18n-properties/1.2.2/jquery.i18n.properties.min.js}"></script>
+    <script type="text/javascript" th:src="@{/js/common.js}"></script>
+</head>
+<body class="stretched">
+
+<div sec:authorize="isAuthenticated()" class="body-overlay"></div>
+
+<div sec:authorize="isAuthenticated()" id="side-panel" class="dark">
+
+    <div id="side-panel-trigger-close" class="side-panel-trigger"><a href="#"><i class="icon-line-cross"></i></a></div>
+
+    <div class="side-panel-wrap">
+
+        <div class="widget clearfix">
+
+            <h4>Pages</h4>
+
+            <nav class="nav-tree nobottommargin">
+                <ul>
+                    <li><a href="#"><i class="icon-bolt2"></i>Features</a>
+                        <ul>
+                            <li><a href="#">Sliders</a></li>
+                            <li><a href="#">Widgets</a></li>
+                            <li><a href="#">Events</a></li>
+                            <li><a href="#">Headers</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#"><i class="icon-briefcase"></i>Portfolio</a>
+                        <ul>
+                            <li><a href="#">Grid</a>
+                                <ul>
+                                    <li><a href="#">3 Columns</a></li>
+                                    <li><a href="#">4 Columns</a></li>
+                                    <li><a href="#">5 Columns</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="#">Masonry</a></li>
+                            <li><a href="#">Loading Styles</a></li>
+                            <li><a href="#">Single</a></li>
+                        </ul>
+                    </li>
+                    <li><a href="#"><i class="icon-file-text"></i>About</a>
+                        <ul>
+                            <li><a href="#">Company</a></li>
+                            <li><a href="#">Team</a></li>
+                            <li><a href="#">Services</a></li>
+                            <li><a href="#">FAQs</a></li>
+                        </ul>
+                    </li>
+                    <li><a th:href="@{/cms/logout}"><i class="icon-lock"></i><span th:text="#{ui.side.panel.menu.logout}"></span></a></li>
+                </ul>
+            </nav>
+
+        </div>
+
+    </div>
+
+</div>
+
+<!-- The Main Wrapper
+============================================= -->
+<div layout:fragment="wrapper" id="wrapper" class="clearfix">
+</div><!-- #wrapper end -->
+
+<!-- Go To Top
+	============================================= -->
+<div id="gotoTop" class="icon-angle-up"></div>
+
+<!-- External JavaScripts
+    ============================================= -->
+<script type="text/javascript" th:src="@{/js/plugins.js}"></script>
+
+<!-- Footer Scripts
+============================================= -->
+<script type="text/javascript" th:src="@{/js/functions.js}"></script>
+
+<script>
+    (function() {
+        var cx = '009071515714431826527:6i1qabtwqd0';
+        var gcse = document.createElement('script');
+        gcse.type = 'text/javascript';
+        gcse.async = true;
+        gcse.src = 'https://cse.google.com/cse.js?cx=' + cx;
+        var s = document.getElementsByTagName('script')[0];
+        s.parentNode.insertBefore(gcse, s);
+    })();
+</script>
+
+</body>
+</html>

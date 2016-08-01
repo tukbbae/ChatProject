@@ -1,0 +1,167 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/web/thymeleaf/layout" layout:decorator="/layouts/basicLayout">
+<head>
+</head>
+<body>
+<div layout:fragment="wrapper">
+
+    <!-- Header
+    ============================================= -->
+    <header th:include="layouts/headerFragment :: header" id="header" class="transparent-header full-header" data-sticky-class="not-dark"></header><!-- #header end -->
+
+    <!-- Page Title
+            ============================================= -->
+    <section id="page-title">
+
+        <div class="container clearfix">
+            <h1 th:text="#{ui.common.navigation.main.postscript}"></h1>
+            <span>스파이 분당 썬팅점에서 시공 후 달라진 고객님의 차량을 자랑 해 주세요.</span>
+            <ol class="breadcrumb">
+                <li><a th:href="@{/}" th:text="#{ui.common.navigation.main.home}"></a></li>
+                <li class="active" th:text="#{ui.common.navigation.main.postscript}"></li>
+            </ol>
+        </div>
+
+    </section><!-- #page-title end -->
+
+    <!-- Content
+        ============================================= -->
+    <section id="content">
+
+        <div class="content-wrap" style="padding: 40px 0px 40px 0px;">
+
+            <div class="container clearfix">
+                <script>
+                /*<![CDATA[*/
+                    window.fbAsyncInit = function() {
+                        FB.init({
+                            appId      : '1727795694157494',
+                            xfbml      : true,
+                            version    : 'v2.5'
+                        });
+                    };
+
+                    (function(d, s, id){
+                        var js, fjs = d.getElementsByTagName(s)[0];
+                        if (d.getElementById(id)) {return;}
+                        js = d.createElement(s); js.id = id;
+                        js.src = "//connect.facebook.net/ko_KR/sdk.js";
+                        fjs.parentNode.insertBefore(js, fjs);
+                    }(document, 'script', 'facebook-jssdk'));
+
+                    $(document).ready(function() {
+                        $("#share-facebook").click(function(event) {
+                            FB.ui(
+                                    {
+                                        method: 'share',
+                                        href: 'http://blog.naver.com/spisunting'
+                                    }, function(response){
+                                        if (response && !response.error_code) {
+                                            alert('공유 완료');
+                                        } else {
+                                            alert('공유 안됨')
+                                        }
+                                    });
+                        });
+                    });
+
+                    // Include the Twitter Library
+                    window.twttr = (function (d,s,id) {
+                        var t, js, fjs = d.getElementsByTagName(s)[0];
+                        if (d.getElementById(id)) return; js=d.createElement(s); js.id=id;
+                        js.src="https://platform.twitter.com/widgets.js"; fjs.parentNode.insertBefore(js, fjs);
+                        return window.twttr || (t = { _e: [], ready: function(f){ t._e.push(f) } });
+                    }(document, "script", "twitter-wjs"));
+
+                    // On ready, register the callback...
+                    twttr.ready(function (twttr) {
+                        twttr.events.bind('tweet', function (event) {
+                            console.log('tweet');
+                        });
+                        twttr.events.bind('click', function(event) {
+                            console.log('clicked');
+                        });
+                    });
+                /*]]>*/
+                </script>
+
+                <div id="disqus_thread"></div>
+                <script th:inline="javascript">
+                /*<![CDATA[*/
+                    /**
+                     * RECOMMENDED CONFIGURATION VARIABLES: EDIT AND UNCOMMENT THE SECTION BELOW TO INSERT DYNAMIC VALUES FROM YOUR PLATFORM OR CMS.
+                     * LEARN WHY DEFINING THESE VARIABLES IS IMPORTANT: https://disqus.com/admin/universalcode/#configuration-variables
+                     */
+
+                    var disqus_config = function () {
+                        this.page.url = /*[[${#httpServletRequest.requestURL.toString()}]]*/ null;
+                        this.page.identifier = '1324324234'; // Replace PAGE_IDENTIFIER with your page's unique identifier variable
+                        this.callbacks.onNewComment = [function(comment) {
+                            console.log(comment);
+                            var url = /*[[${#httpServletRequest.requestURL.toString()}]]*/ null;
+                            url = url + '#comment-' + comment.id;
+                            $('#share-twitter').attr("href", 'https://twitter.com/intent/tweet?text=' + comment.text + '&url=' + url);
+                            $('#myModal').modal({
+                                backdrop : 'static'
+                            });
+                        }];
+                    };
+
+                    (function() { // DON'T EDIT BELOW THIS LINE
+                        var d = document, s = d.createElement('script');
+
+                        s.src = '//totalsunting.disqus.com/embed.js';
+
+                        s.setAttribute('data-timestamp', +new Date());
+                        (d.head || d.body).appendChild(s);
+                    })();
+
+                /*]]>*/
+                </script>
+                <noscript>Please enable JavaScript to view the <a href="https://disqus.com/?ref_noscript" rel="nofollow">comments powered by Disqus.</a></noscript>
+
+                <!-- Event Notification Modal -->
+                <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-sm">
+                        <div class="modal-body">
+                            <div class="modal-content">
+                                <div class="modal-header text-center">
+                                    <h4 class="modal-title" id="myModalLabel">후기가 등록되었습니다.</h4>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <p>후기를 등록해주셔서 감사합니다.<br />등록하신 후기를 SNS에 공유해주시면 할인 쿠폰을 발급해드립니다.</p>
+                                    <div class="col_full clearfix" style="margin-bottom: 0px;padding-left: 55px;">
+                                        <a id="share-facebook" href="#" class="social-icon si-colored si-facebook">
+                                            <i class="icon-facebook"></i>
+                                            <i class="icon-facebook"></i>
+                                        </a>
+                                        <a id="share-twitter" href="#" class="social-icon si-colored si-twitter">
+                                            <i class="icon-twitter"></i>
+                                            <i class="icon-twitter"></i>
+                                        </a>
+                                        <a id="share-gplus" href="#" class="social-icon si-colored si-gplus">
+                                            <i class="icon-gplus"></i>
+                                            <i class="icon-gplus"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">아니요, 괜찮습니다.</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- Footer
+        ============================================= -->
+    <footer th:include="layouts/footerFragment :: footer" id="footer" class="dark"></footer><!-- #footer end -->
+
+</div>
+</body>
+</html>
