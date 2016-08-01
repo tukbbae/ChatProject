@@ -63,7 +63,6 @@ public final class Constants {
 
     public static class MessageClass {
         public static final String NORMAL = "message";
-        public static final String ATTENDANCE = "attendance";
     }
 
     public final class ModelMapAttribute {

@@ -33,12 +33,12 @@ public class ChatRestController extends BaseController {
     @Autowired
     private MessageSource messageSource;
 
-    @RequestMapping(value = "/regi_request", method = RequestMethod.POST)
+    @RequestMapping(value = "/regiRequest", method = RequestMethod.POST)
     public JsonResult registerRegiId(@RequestBody Map<String, String> requestBody, Locale locale) throws Exception {
         logger.info("[====== Start of registerRegiId method ======]");
 
         String regiId = requestBody.get("regi_id");
-        String phoneNumber = requestBody.get("phone_number");
+        String email = requestBody.get("email");
         String deviceType = requestBody.get("device_type");
 
         JsonResult result = new JsonResult();
@@ -48,7 +48,7 @@ public class ChatRestController extends BaseController {
             result.setResultMessage(messageSource.getMessage("app.api.registerRegiId.failed.reason.regiIdIsRequeired", null, locale));
             return result;
         }
-        if (phoneNumber == null) {
+        if (email == null) {
             result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
             result.setResultMessage(messageSource.getMessage("app.api.registerRegiId.failed.reason.phoneNumberIsRequired", null, locale));
             return result;
@@ -59,7 +59,7 @@ public class ChatRestController extends BaseController {
             return result;
         }
 
-        if (restService.registerDeviceIdentifier(regiId, phoneNumber, deviceType)) {
+        if (restService.registerDeviceIdentifier(regiId, email, deviceType)) {
             result.setResultCode(Constants.ResponseCode.SUCCESS);
             result.setResultMessage(messageSource.getMessage("app.api.response.description.success", null, locale));
         } else  {
@@ -75,13 +75,13 @@ public class ChatRestController extends BaseController {
     public boolean isRegistered(@RequestBody Map<String, String> requestBody, Locale locale) throws Exception {
         logger.info("[====== Start of registerRegiId method ======]");
         logger.debug("body => {}", requestBody);
-        boolean result = restService.isRegisteredAddress(requestBody.get("phone_number"));
+        boolean result = restService.isRegisteredAddress(requestBody.get("email"));
 
         logger.info("[====== End of registerRegiId method ======]");
         return result;
     }
 
-    @RequestMapping(value = "/push_request")
+    @RequestMapping(value = "/pushRequest")
     public JsonResult sendPushMessage(@RequestBody PushRequestBody requestBody, Locale locale) throws Exception {
         logger.info("[====== Start of sendPushMessage method ======]");
 
@@ -99,14 +99,9 @@ public class ChatRestController extends BaseController {
         return result;
     }
 
-    @RequestMapping(value = "/address_request")
+    @RequestMapping(value = "/addressRequest")
     public List<Address> getAddressList(@RequestParam(value = "did", required = false, defaultValue = "") String did, Locale locale) throws  Exception {
         return restService.getAddressList(did);
-    }
-
-    @RequestMapping(value = "/auth_device")
-    public JsonResult authDevice(@RequestParam(value = "authKey", required = true) String authKey, Locale locale) throws Exception {
-        return restService.completeAuthentication(authKey, locale);
     }
 
     @RequestMapping(value = "/ack_message")

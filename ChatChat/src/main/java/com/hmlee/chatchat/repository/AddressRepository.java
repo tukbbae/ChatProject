@@ -16,14 +16,11 @@ import java.util.List;
 @Repository
 public interface AddressRepository extends DataTablesRepository<Address, Long> {
 
-    @Query("SELECT a FROM Address a WHERE a.phoneNumber = :phoneNumber")
-    public Address findAddressByPhoneNumber(@Param("phoneNumber") String phoneNumber);
+    @Query("SELECT a FROM Address a WHERE a.email = :email")
+    public Address findAddressByEmail(@Param("email") String email);
 
     @Query("SELECT a FROM Address a WHERE a.regiId = :regiId")
     public Address findAddressByregiId(@Param("regiId") String regiId);
-
-    @Query("SELECT a FROM Address a WHERE a.department = :department")
-    public DataTablesOutput<Address> findAddressByDepartment(@Param("department") String department);
 
     @Query("SELECT a FROM Address a WHERE a.name LIKE :name")
     public List<Address> findAddressByName(@Param("name") String name);

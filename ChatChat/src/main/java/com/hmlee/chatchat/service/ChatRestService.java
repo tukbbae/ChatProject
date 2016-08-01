@@ -13,9 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thymeleaf.context.Context;
 import org.thymeleaf.spring4.SpringTemplateEngine;
 
+import com.hmlee.chatchat.client.FCMClient;
 import com.hmlee.chatchat.core.base.BaseService;
 import com.hmlee.chatchat.core.constant.Constants;
-import com.hmlee.chatchat.core.crypto.AESCrypt;
 import com.hmlee.chatchat.core.util.ListUtils;
 import com.hmlee.chatchat.model.AckBody;
 import com.hmlee.chatchat.model.JsonResult;
@@ -29,10 +29,11 @@ import com.hmlee.chatchat.repository.AddressRepository;
 import com.hmlee.chatchat.repository.MessageRepository;
 import com.hmlee.chatchat.repository.StatisticRepository;
 
-import javax.mail.internet.MimeMessage;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
+
+import javax.mail.internet.MimeMessage;
 
 /**
  * ChatRestService
@@ -56,6 +57,9 @@ public class ChatRestService extends BaseService {
 
     @Autowired
     private StatisticRepository statisticRepository;
+    
+    @Autowired
+    private JavaMailSender mailSender;
 
     @Autowired
     private SpringTemplateEngine templateEngine;
@@ -67,30 +71,14 @@ public class ChatRestService extends BaseService {
     private String serverPort;
 
     @Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
-    public boolean registerDeviceIdentifier(String regiId, String phoneNumber, String deviceType) {
+    public boolean registerDeviceIdentifier(String regiId, String email, String deviceType) {
 
-        Address foundAddress = addressRepository.findAddressByPhoneNumber(phoneNumber);
+        Address foundAddress = addressRepository.findAddressByEmail(email);
         if (foundAddress != null) {
             if (!regiId.equals(foundAddress.getRegiId())) {
                 if (Constants.DeviceType.IOS.equalsIgnoreCase(deviceType)) {
-                    try {
-                        List<String> keys = new ArrayList<String>();
-                        keys.add(phoneNumber);
-                        keys.add(regiId);
-
-                        String authKey = AESCrypt.encrypt(StringUtils.join(keys, "|"));
-//                        if (StringUtils.isNotBlank(foundAddress.getEmail())) {
-//                            sendAuthenticateMail(authKey, foundAddress.getEmail());
-//                            return true;
-//                        } else {
-//                            return false;
-//                        }
-                        return false;
-                    } catch (Exception e) {
-                        logger.error("## FAILED GENERATE DEVICE AUTH KEY!!!");
-                        e.printStackTrace();
-                        return false;
-                    }
+                	// TODO :: IOS 단말 인증 기능 개발
+                	return false;
                 } else {
                     foundAddress.setRegiId(regiId);
                     addressRepository.save(foundAddress);
@@ -98,24 +86,8 @@ public class ChatRestService extends BaseService {
                 }
             } else {
                 if (Constants.DeviceType.IOS.equalsIgnoreCase(deviceType)) {
-                    try {
-                        List<String> keys = new ArrayList<String>();
-                        keys.add(phoneNumber);
-                        keys.add(regiId);
-
-                        String authKey = AESCrypt.encrypt(StringUtils.join(keys, "|"));
-//                        if (StringUtils.isNotBlank(foundAddress.getEmail())) {
-//                            sendAuthenticateMail(authKey, foundAddress.getEmail());
-//                            return true;
-//                        } else {
-//                            return false;
-//                        }
-                        return false;
-                    } catch (Exception e) {
-                        logger.error("## FAILED GENERATE DEVICE AUTH KEY!!!");
-                        e.printStackTrace();
-                        return false;
-                    }
+                	// TODO :: IOS 단말 인증 기능 개발
+                	return false;
                 }
 
                 return true;
@@ -125,8 +97,8 @@ public class ChatRestService extends BaseService {
         }
     }
 
-    public boolean isRegisteredAddress(String phoneNumber) {
-        Address address = addressRepository.findAddressByPhoneNumber(phoneNumber);
+    public boolean isRegisteredAddress(String email) {
+        Address address = addressRepository.findAddressByEmail(email);
         logger.debug("Find result => {}", address);
         return (address != null);
     }
@@ -137,11 +109,11 @@ public class ChatRestService extends BaseService {
         JsonResult result = new JsonResult();
         logger.debug("Puhs requestBody => {}", requestBody);
 
-        // 발송할 메시지 목록 중 첫번째 메시지 정보에서 발신자 번호를 가져온다.
+        // 발송할 메시지 목록 중 첫번째 메시지 정보에서 발신자 이메일을 가져온다.
         // FIXME : 추후 수정이 필요한 항목
         MessageBody firstReceiverMessage = requestBody.getPushList().get(0);
-        String senderPhoneNumber = firstReceiverMessage.getSender();
-        Address senderAddress = addressRepository.findAddressByPhoneNumber(senderPhoneNumber);
+        String senderEmail = firstReceiverMessage.getEmail();
+        Address senderAddress = addressRepository.findAddressByEmail(senderEmail);
         if (senderAddress == null) {
             result.setResultCode(Constants.ResponseCode.NOT_FOUND);
             result.setResultMessage(messageSource.getMessage("app.api.sendMessage.failed.reason.notExistSender", null, locale));
@@ -162,7 +134,7 @@ public class ChatRestService extends BaseService {
         if (Constants.MessageClass.NORMAL.equals(type)) {
             sendMessage = firstReceiverMessage.getMessage();
         } else {
-            sendMessage = "http://"+serverHost+":"+serverPort+"/api/attendance/"+dateFormat.format(sendDate);
+            // TODO :: 추후 다른 타입의 메시지 올 경우 처리 필요
         }
 
         // save message to db
@@ -170,11 +142,10 @@ public class ChatRestService extends BaseService {
         message = messageRepository.saveAndFlush(message);
 
         // 수신자의 단말 유형에 따라 발신 목록을 구성
-        List<String> apnsReceiverList = new ArrayList<>();
-        List<String> gcmReceiverList = new ArrayList<>();
+        List<String> fcmReceiverList = new ArrayList<>();
         List<String> mailReceiverList = new ArrayList<>();
         for (MessageBody messageBody : requestBody.getPushList()) {
-            Address receiver = addressRepository.findAddressByPhoneNumber(messageBody.getPhone_number());
+            Address receiver = addressRepository.findAddressByEmail(messageBody.getEmail());
 
             if (receiver != null) {
 
@@ -188,10 +159,9 @@ public class ChatRestService extends BaseService {
 
                 if (receiver.getRegiId() != null) {
                     if (Constants.DeviceType.IOS.equalsIgnoreCase(receiver.getDeviceType())) {
-                        apnsReceiverList.add(receiver.getRegiId());
-                        statistic.setIsRead(false);
+                        // TODO :: IOS 단말 전송 기능 개발
                     } else {
-                        gcmReceiverList.add(receiver.getRegiId());
+                        fcmReceiverList.add(receiver.getRegiId());
                         statistic.setReceiveDate(new Date());
                         statistic.setIsRead(true);
                     }
@@ -210,35 +180,24 @@ public class ChatRestService extends BaseService {
         }
         statisticRepository.flush();
 
-        if (gcmReceiverList.size() > 0) {
-        	// TODO :: FCM 발송 기능
-//            try {
-//                // GCM 발송
-//                GCMClient.getInstance().sendGCM(gcmReceiverList, senderAddress.getName(), senderPhoneNumber, sendMessage, type);
-//            } catch (Exception e) {
-//                logger.error("## IO.EXT.GCM Exception");
-//                e.printStackTrace();
-//                result.setResultCode(Constants.ResponseCode.SERVER_ERROR);
-//                result.setResultMessage(messageSource.getMessage("app.api.response.description.internalServerError", null, locale));
-//                return result;
-//            }
+        if (fcmReceiverList.size() > 0) {
+            try {
+                // FCM 발송
+                FCMClient.getInstance().sendFCM(fcmReceiverList, senderAddress.getName(), senderEmail, sendMessage, type);
+            } catch (Exception e) {
+                logger.error("## IO.EXT.FCM Exception");
+                e.printStackTrace();
+                result.setResultCode(Constants.ResponseCode.SERVER_ERROR);
+                result.setResultMessage(messageSource.getMessage("app.api.response.description.internalServerError", null, locale));
+                return result;
+            }
         }
 
-//        if (apnsReceiverList.size() > 0) {
-//            // APNS 발송
-//            for (String deviceToken : apnsReceiverList) {
-//                Address receiver = addressRepository.findAddressByregiId(deviceToken);
-//                int unreadCount = statisticRepository.unreadCountByReceiverPhoneNumber(receiver.getPhoneNumber());
-//                // FIXME : APNS는 길이 제한이 있으므로 메시지를 먼저 DB에 저장하고 단말에서 조회 요청을 해서 메시지 전문을 확인하는 방식으로 수정 필요
-//                APNSClient.getInstance().sendAPNS(type, deviceToken, senderAddress.getName(), senderPhoneNumber, sendMessage, Constants.ApnsMessageType.GENERAL_MESSAGE, message.getIdx().intValue(), unreadCount);
-//            }
-//        }
-
-//        if (mailReceiverList.size() > 0) {
-//            // 메일 발송
-//            String[] receivers = mailReceiverList.toArray(new String[mailReceiverList.size()]);
-//            sendGeneralMessageMail(senderAddress, receivers, sendMessage);
-//        }
+        if (mailReceiverList.size() > 0) {
+            // 메일 발송
+            String[] receivers = mailReceiverList.toArray(new String[mailReceiverList.size()]);
+            sendGeneralMessageMail(senderAddress, receivers, sendMessage);
+        }
 
         result.setResultCode(Constants.ResponseCode.SUCCESS);
         if (Constants.MessageClass.NORMAL.equals(type)) {
@@ -249,6 +208,40 @@ public class ChatRestService extends BaseService {
         }
 
         return result;
+    }
+    
+    private boolean sendGeneralMessageMail(Address sender, String[] receivers, String content) {
+        Locale locale = LocaleContextHolder.getLocale();
+        final Context ctx = new Context(locale);
+        ctx.setVariable("sendDate", new Date());
+        ctx.setVariable("message", content);
+
+        try {
+            // Prepare message using a Spring helper
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper message =
+                    new MimeMessageHelper(mimeMessage, true, "UTF-8"); // true = multipart
+            String[] args = {sender.getName()};
+            message.setSubject(messageSource.getMessage("ui.email.general.subject", args, locale));
+            message.setTo(receivers);
+
+            // Create the HTML body using Thymeleaf
+            String htmlContent = templateEngine.process("mails/general_msg_mail", ctx);
+            message.setText(htmlContent, true); // true = isHtml
+
+            // Add the inline image, referenced from the HTML code as "cid:${imageResourceName}"
+            // final InputStreamSource imageSource = new ByteArrayResource(imageBytes);
+            // message.addInline(imageResourceName, imageSource, imageContentType);
+
+            // Send mail
+            mailSender.send(mimeMessage);
+
+            return true;
+        } catch (Exception e) {
+            logger.error("## SEND GENERAL MAIL ERROR!!!");
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public List<Address> getAddressList(String did) {
@@ -263,50 +256,6 @@ public class ChatRestService extends BaseService {
         }
 
         return ListUtils.toList(iterable);
-    }
-
-    public JsonResult completeAuthentication(String authKey, Locale locale) {
-        JsonResult result = new JsonResult();
-
-        try {
-            String decrytedKey = AESCrypt.decrypt(authKey);
-            String[] keys = decrytedKey.trim().split("\\|");
-
-            if (keys.length != 2) {
-                result.setResultCode(Constants.ResponseCode.FAILED);
-                result.setResultMessage(messageSource.getMessage("app.authentication.result.invalidAuthKey", null, locale));
-            } else {
-                String phoneNumber = keys[0];
-                String deviceToken = keys[1];
-
-                Address address = addressRepository.findAddressByPhoneNumber(phoneNumber);
-                logger.debug("Find result => {}", address);
-                if (address != null) {
-                    address.setRegiId(deviceToken);
-                    address.setDeviceType(Constants.DeviceType.IOS);
-                    addressRepository.save(address);
-
-//                    APNSClient.getInstance().sendAPNS(Constants.MessageClass.NORMAL, deviceToken,
-//                            null, null,
-//                            messageSource.getMessage("app.authentication.result.success", null, locale),
-//                            Constants.ApnsMessageType.AUTHENTICATION, 0, 0);
-
-                    result.setResultCode(Constants.ResponseCode.SUCCESS);
-                    result.setResultMessage(messageSource.getMessage("app.authentication.result.success", null, locale));
-                } else {
-                    result.setResultCode(Constants.ResponseCode.FAILED);
-                    result.setResultMessage(messageSource.getMessage("app.authentication.result.notExistAddress", null, locale));
-                }
-            }
-        } catch (Exception e) {
-            logger.error("## AUTHENTICATION ERROR ##");
-            e.printStackTrace();
-            result.setResultCode(Constants.ResponseCode.SERVER_ERROR);
-            result.setResultMessage(messageSource.getMessage("app.api.response.description.internalServerError", null, locale));
-            return result;
-        }
-
-        return result;
     }
 
     @Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
