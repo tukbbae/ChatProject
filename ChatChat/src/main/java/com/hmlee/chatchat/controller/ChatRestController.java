@@ -32,54 +32,82 @@ public class ChatRestController extends BaseController {
 
     @Autowired
     private MessageSource messageSource;
+    
+	@RequestMapping(value = "/isRegistered", method = RequestMethod.POST)
+	public boolean isRegistered(@RequestBody Map<String, String> requestBody, Locale locale) throws Exception {
+		logger.info("[====== Start of isRegistered method ======]");
+		logger.debug("body => {}", requestBody);
+		// TODO :: service 로직 개발 필요
+		boolean result = restService.isRegisteredAddress(requestBody.get("email"));
 
-    @RequestMapping(value = "/regiRequest", method = RequestMethod.POST)
-    public JsonResult registerRegiId(@RequestBody Map<String, String> requestBody, Locale locale) throws Exception {
-        logger.info("[====== Start of registerRegiId method ======]");
+		logger.info("[====== End of isRegistered method ======]");
+		return result;
+	}
 
-        String regiId = requestBody.get("regi_id");
-        String email = requestBody.get("email");
-        String deviceType = requestBody.get("device_type");
+	@RequestMapping(value = "/registerRequest", method = RequestMethod.POST)
+	public JsonResult registerRequest(@RequestBody Map<String, String> requestBody, Locale locale) throws Exception {
+		logger.info("[====== Start of registerRequest method ======]");
 
-        JsonResult result = new JsonResult();
+		String email = requestBody.get("email");
+		String name = requestBody.get("name");
+		String token = requestBody.get("token");
+		String deviceType = requestBody.get("device_type");
 
-        if (regiId == null) {
-            result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
-            result.setResultMessage(messageSource.getMessage("app.api.registerRegiId.failed.reason.regiIdIsRequeired", null, locale));
-            return result;
-        }
-        if (email == null) {
-            result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
-            result.setResultMessage(messageSource.getMessage("app.api.registerRegiId.failed.reason.phoneNumberIsRequired", null, locale));
-            return result;
-        }
-        if (deviceType == null) {
-            result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
-            result.setResultMessage(messageSource.getMessage("app.api.registerRegiId.failed.reason.deviceTypeIsRequired", null, locale));
-            return result;
-        }
+		JsonResult result = new JsonResult();
 
-        if (restService.registerDeviceIdentifier(regiId, email, deviceType)) {
-            result.setResultCode(Constants.ResponseCode.SUCCESS);
-            result.setResultMessage(messageSource.getMessage("app.api.response.description.success", null, locale));
-        } else  {
-            result.setResultCode(Constants.ResponseCode.FAILED);
-            result.setResultMessage(messageSource.getMessage("app.api.response.description.failed", null, locale));
-        }
+		if (email == null) {
+			result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
+			result.setResultMessage(messageSource
+					.getMessage("app.api.registerRegiId.failed.reason.emailIsRequired", null, locale));
+			return result;
+		}
+		
+		if (name == null) {
+			result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
+			result.setResultMessage(messageSource
+					.getMessage("app.api.registerRegiId.failed.reason.nameIsRequired", null, locale));
+			return result;
+		}
+		
+		if (token == null) {
+			result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
+			result.setResultMessage(messageSource.getMessage("app.api.registerRegiId.failed.reason.tokenIsRequeired", null, locale));
+			return result;
+		}
 
-        logger.info("[====== End of registerRegiId method ======]");
-        return result;
+		if (deviceType == null) {
+			result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
+			result.setResultMessage(messageSource
+					.getMessage("app.api.registerRegiId.failed.reason.deviceTypeIsRequired", null, locale));
+			return result;
+		}
+
+		// TODO :: service 로직 개발 필요
+		if (restService.registerDeviceIdentifier(email, name, token, deviceType)) {
+			result.setResultCode(Constants.ResponseCode.SUCCESS);
+			result.setResultMessage(messageSource.getMessage("app.api.response.description.success", null, locale));
+		} else {
+			result.setResultCode(Constants.ResponseCode.FAILED);
+			result.setResultMessage(messageSource.getMessage("app.api.response.description.failed", null, locale));
+		}
+
+		logger.info("[====== End of registerRequest method ======]");
+		return result;
+	}
+	
+	// TODO :: /api/getFriendList API 개발
+    @RequestMapping(value = "/getFriendList", method = RequestMethod.POST)
+    public List<Address> getFriendList(@RequestBody Map<String, String> requestBody, Locale locale) throws  Exception {
+    	logger.info("[====== Start of getFriendList method ======]");
+
+		logger.info("[====== End of getFriendList method ======]");
+    	
+    	return null;
     }
-
-    @RequestMapping(value = "/isRegistered", method = RequestMethod.POST)
-    public boolean isRegistered(@RequestBody Map<String, String> requestBody, Locale locale) throws Exception {
-        logger.info("[====== Start of registerRegiId method ======]");
-        logger.debug("body => {}", requestBody);
-        boolean result = restService.isRegisteredAddress(requestBody.get("email"));
-
-        logger.info("[====== End of registerRegiId method ======]");
-        return result;
-    }
+	
+	// TODO :: /api/addFriendRequest API 개발
+	
+	// TODO :: /api/messageRequest API 개발
 
     @RequestMapping(value = "/pushRequest")
     public JsonResult sendPushMessage(@RequestBody PushRequestBody requestBody, Locale locale) throws Exception {

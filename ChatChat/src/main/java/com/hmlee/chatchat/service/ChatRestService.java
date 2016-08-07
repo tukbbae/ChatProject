@@ -70,17 +70,25 @@ public class ChatRestService extends BaseService {
     @Value("${server.port}")
     private String serverPort;
 
+	// TODO :: isRegistered API 의 비즈니스 로직 처리 필요
+	public boolean isRegisteredAddress(String email) {
+		Address address = addressRepository.findAddressByEmail(email);
+		logger.debug("Find result => {}", address);
+		return (address != null);
+	}
+    
+    // TODO :: registerRequest API 의 비즈니스 로직 처리 필요
     @Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
-    public boolean registerDeviceIdentifier(String regiId, String email, String deviceType) {
+    public boolean registerDeviceIdentifier(String email, String name, String token, String deviceType) {
 
         Address foundAddress = addressRepository.findAddressByEmail(email);
         if (foundAddress != null) {
-            if (!regiId.equals(foundAddress.getRegiId())) {
+            if (!token.equals(foundAddress.getRegiId())) {
                 if (Constants.DeviceType.IOS.equalsIgnoreCase(deviceType)) {
                 	// TODO :: IOS 단말 인증 기능 개발
                 	return false;
                 } else {
-                    foundAddress.setRegiId(regiId);
+                    foundAddress.setRegiId(token);
                     addressRepository.save(foundAddress);
                     return true;
                 }
@@ -95,12 +103,6 @@ public class ChatRestService extends BaseService {
         } else {
             return false;
         }
-    }
-
-    public boolean isRegisteredAddress(String email) {
-        Address address = addressRepository.findAddressByEmail(email);
-        logger.debug("Find result => {}", address);
-        return (address != null);
     }
 
     @Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
