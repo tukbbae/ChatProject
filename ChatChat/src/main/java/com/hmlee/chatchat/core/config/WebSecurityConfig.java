@@ -81,7 +81,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .invalidateHttpSession(true) // 로그아웃 후 HttpSession을 무효화 시키는 설정
                 .deleteCookies("JSESSIONID") // 로그아웃 시 세션에서 사용된 쿠키를 삭제하도록 하는 설정
                 .permitAll();
-        //http.headers().frameOptions().disable();
+        http.headers().frameOptions().disable();
     }
     
     /**
