@@ -59,6 +59,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
+        	.csrf().disable()
             .authorizeRequests()
                 .antMatchers("/", "/webjars/**", "/api/**", "/cms/login", "/favicon.ico", "/home", "/console/**").permitAll()
                 .antMatchers("/cms/account").hasAnyAuthority(AccountRole.ROLE_ADMIN.getRoleCode())
@@ -82,7 +83,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .permitAll();
         //http.headers().frameOptions().disable();
     }
-
+    
     /**
      * Configure Web Security
      *
