@@ -25,9 +25,11 @@ import com.hmlee.chatchat.model.UnreadMessage;
 import com.hmlee.chatchat.model.domain.Address;
 import com.hmlee.chatchat.model.domain.Message;
 import com.hmlee.chatchat.model.domain.Statistic;
+import com.hmlee.chatchat.model.domain.User;
 import com.hmlee.chatchat.repository.AddressRepository;
 import com.hmlee.chatchat.repository.MessageRepository;
 import com.hmlee.chatchat.repository.StatisticRepository;
+import com.hmlee.chatchat.repository.UserRepository;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -51,6 +53,9 @@ public class ChatRestService extends BaseService {
 
     @Autowired
     private AddressRepository addressRepository;
+    
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private MessageRepository messageRepository;
@@ -70,39 +75,24 @@ public class ChatRestService extends BaseService {
     @Value("${server.port}")
     private String serverPort;
 
-	// TODO :: isRegistered API 의 비즈니스 로직 처리 필요
 	public boolean isRegisteredAddress(String email) {
-		Address address = addressRepository.findAddressByEmail(email);
-		logger.debug("Find result => {}", address);
-		return (address != null);
+		User user = userRepository.findUserByEmail(email);
+		logger.debug("Find result => {}", user);
+		return (user != null);
 	}
     
-    // TODO :: registerRequest API 의 비즈니스 로직 처리 필요
     @Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
     public boolean registerDeviceIdentifier(String email, String name, String token, String deviceType) {
 
-        Address foundAddress = addressRepository.findAddressByEmail(email);
-        if (foundAddress != null) {
-            if (!token.equals(foundAddress.getRegiId())) {
-                if (Constants.DeviceType.IOS.equalsIgnoreCase(deviceType)) {
-                	// TODO :: IOS 단말 인증 기능 개발
-                	return false;
-                } else {
-                    foundAddress.setRegiId(token);
-                    addressRepository.save(foundAddress);
-                    return true;
-                }
-            } else {
-                if (Constants.DeviceType.IOS.equalsIgnoreCase(deviceType)) {
-                	// TODO :: IOS 단말 인증 기능 개발
-                	return false;
-                }
-
-                return true;
-            }
+        User foundUser = userRepository.findUserByEmail(email);
+        if (foundUser == null) {
+        	User newUser = new User(email, name, token, deviceType);
+        	userRepository.save(newUser);
+            return true;
         } else {
-            return false;
+        	return false;
         }
+
     }
 
     @Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)

@@ -37,7 +37,6 @@ public class ChatRestController extends BaseController {
 	public boolean isRegistered(@RequestBody Map<String, String> requestBody, Locale locale) throws Exception {
 		logger.info("[====== Start of isRegistered method ======]");
 		logger.debug("body => {}", requestBody);
-		// TODO :: service 로직 개발 필요
 		boolean result = restService.isRegisteredAddress(requestBody.get("email"));
 
 		logger.info("[====== End of isRegistered method ======]");
@@ -82,7 +81,6 @@ public class ChatRestController extends BaseController {
 			return result;
 		}
 
-		// TODO :: service 로직 개발 필요
 		if (restService.registerDeviceIdentifier(email, name, token, deviceType)) {
 			result.setResultCode(Constants.ResponseCode.SUCCESS);
 			result.setResultMessage(messageSource.getMessage("app.api.response.description.success", null, locale));
