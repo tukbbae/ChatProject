@@ -23,10 +23,12 @@ import com.hmlee.chatchat.model.MessageBody;
 import com.hmlee.chatchat.model.PushRequestBody;
 import com.hmlee.chatchat.model.UnreadMessage;
 import com.hmlee.chatchat.model.domain.Address;
+import com.hmlee.chatchat.model.domain.Friend;
 import com.hmlee.chatchat.model.domain.Message;
 import com.hmlee.chatchat.model.domain.Statistic;
 import com.hmlee.chatchat.model.domain.User;
 import com.hmlee.chatchat.repository.AddressRepository;
+import com.hmlee.chatchat.repository.FriendRepository;
 import com.hmlee.chatchat.repository.MessageRepository;
 import com.hmlee.chatchat.repository.StatisticRepository;
 import com.hmlee.chatchat.repository.UserRepository;
@@ -56,6 +58,9 @@ public class ChatRestService extends BaseService {
     
     @Autowired
     private UserRepository userRepository;
+    
+    @Autowired
+    private FriendRepository friendRepository;
 
     @Autowired
     private MessageRepository messageRepository;
@@ -92,8 +97,27 @@ public class ChatRestService extends BaseService {
         } else {
         	return false;
         }
-
     }
+    
+	public List<User> getFriendList(String userEmail) {
+		Iterable<User> iterable = null;
+		iterable = friendRepository.findFriendListByUserId(userEmail);
+		return ListUtils.toList(iterable);
+	}
+
+	@Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
+	public boolean registerFriend(String userEmail, String friendEmail) {
+		User foundFriend = userRepository.findUserByEmail(friendEmail);
+		if (foundFriend != null) {
+			Friend friend = new Friend();
+			friend.setUserEmail(userEmail);
+			friend.setFriend(foundFriend);
+			friendRepository.save(friend);
+			return true;
+		} else {
+			return false;
+		}
+	}
 
     @Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
     public JsonResult sendPushMessage(PushRequestBody requestBody, Locale locale) {

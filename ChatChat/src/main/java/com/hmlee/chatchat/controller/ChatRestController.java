@@ -12,6 +12,7 @@ import com.hmlee.chatchat.model.JsonResult;
 import com.hmlee.chatchat.model.PushRequestBody;
 import com.hmlee.chatchat.model.UnreadMessage;
 import com.hmlee.chatchat.model.domain.Address;
+import com.hmlee.chatchat.model.domain.User;
 import com.hmlee.chatchat.service.ChatRestService;
 
 import java.util.*;
@@ -93,20 +94,43 @@ public class ChatRestController extends BaseController {
 		return result;
 	}
 	
-	// TODO :: /api/getFriendList API 개발
+	// TODO :: /api/getFriendList API 개발중
     @RequestMapping(value = "/getFriendList", method = RequestMethod.POST)
-    public List<Address> getFriendList(@RequestBody Map<String, String> requestBody, Locale locale) throws  Exception {
-    	logger.info("[====== Start of getFriendList method ======]");
-
-		logger.info("[====== End of getFriendList method ======]");
-    	
-    	return null;
+    public List<User> getFriendList(@RequestBody Map<String, String> requestBody, Locale locale) throws  Exception {
+    	logger.debug("body => {}", requestBody);
+    	return restService.getFriendList(requestBody.get("userEmail"));
     }
 	
-	// TODO :: /api/addFriendRequest API 개발
+	// TODO :: /api/addFriendRequest API 개발중
+    @RequestMapping(value = "/addFriendRequest", method = RequestMethod.POST)
+    public JsonResult addFriendRequest(@RequestBody Map<String, String> requestBody, Locale locale) throws Exception {
+    	logger.info("[====== Start of addFriendRequest method ======]");
+
+		String userEmail = requestBody.get("userEmail");
+		String friendEmail = requestBody.get("friendEmail");
+
+		JsonResult result = new JsonResult();
+    	
+    	if (restService.registerFriend(userEmail, friendEmail)) {
+			result.setResultCode(Constants.ResponseCode.SUCCESS);
+			result.setResultMessage(messageSource.getMessage("app.api.response.description.success", null, locale));
+		} else {
+			result.setResultCode(Constants.ResponseCode.FAILED);
+			result.setResultMessage(messageSource.getMessage("app.api.response.description.failed", null, locale));
+		}
+
+		logger.info("[====== End of addFriendRequest method ======]");
+		return result;
+    }
 	
 	// TODO :: /api/messageRequest API 개발
-
+    public JsonResult messageRequest(@RequestBody PushRequestBody requestBody, Locale locale) throws Exception {
+        logger.info("[====== Start of messageRequest method ======]");
+        logger.info("[====== End of messageRequest method ======]");
+        
+        return null;
+    }
+    
     @RequestMapping(value = "/pushRequest")
     public JsonResult sendPushMessage(@RequestBody PushRequestBody requestBody, Locale locale) throws Exception {
         logger.info("[====== Start of sendPushMessage method ======]");
