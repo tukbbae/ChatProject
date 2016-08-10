@@ -126,33 +126,43 @@ public class ChatRestController extends BaseController {
 	// TODO :: /api/messageRequest API 개발
     public JsonResult messageRequest(@RequestBody PushRequestBody requestBody, Locale locale) throws Exception {
         logger.info("[====== Start of messageRequest method ======]");
-        logger.info("[====== End of messageRequest method ======]");
         
-        return null;
-    }
-    
-    @RequestMapping(value = "/pushRequest")
-    public JsonResult sendPushMessage(@RequestBody PushRequestBody requestBody, Locale locale) throws Exception {
-        logger.info("[====== Start of sendPushMessage method ======]");
-
         if(requestBody == null) {
             JsonResult result = new JsonResult();
             result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
             result.setResultMessage(messageSource.getMessage("app.api.response.description.badRequest", null, locale));
             return result;
         }
-
-        JsonResult result = restService.sendPushMessage(requestBody, locale);
-
-        logger.info("[====== End of sendPushMessage method ======]");
-
+        
+        JsonResult result = restService.sendFCMMessage(requestBody, locale);
+        
+        logger.info("[====== End of messageRequest method ======]");
+        
         return result;
     }
+    
+//    @RequestMapping(value = "/pushRequest")
+//    public JsonResult sendPushMessage(@RequestBody PushRequestBody requestBody, Locale locale) throws Exception {
+//        logger.info("[====== Start of sendPushMessage method ======]");
+//
+//        if(requestBody == null) {
+//            JsonResult result = new JsonResult();
+//            result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
+//            result.setResultMessage(messageSource.getMessage("app.api.response.description.badRequest", null, locale));
+//            return result;
+//        }
+//
+//        JsonResult result = restService.sendPushMessage(requestBody, locale);
+//
+//        logger.info("[====== End of sendPushMessage method ======]");
+//
+//        return result;
+//    }
 
-    @RequestMapping(value = "/addressRequest")
-    public List<Address> getAddressList(@RequestParam(value = "did", required = false, defaultValue = "") String did, Locale locale) throws  Exception {
-        return restService.getAddressList(did);
-    }
+//    @RequestMapping(value = "/addressRequest")
+//    public List<Address> getAddressList(@RequestParam(value = "did", required = false, defaultValue = "") String did, Locale locale) throws  Exception {
+//        return restService.getAddressList(did);
+//    }
 
     @RequestMapping(value = "/ack_message")
     public JsonResult ackMessage(@RequestBody AckRequestBody requestBody, Locale locale) throws Exception {

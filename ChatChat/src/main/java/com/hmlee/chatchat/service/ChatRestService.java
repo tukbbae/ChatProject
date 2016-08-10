@@ -118,6 +118,15 @@ public class ChatRestService extends BaseService {
 			return false;
 		}
 	}
+	
+	// TODO :: messageRequest API 서비스 로직 개발
+	@Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
+	public JsonResult sendFCMMessage(PushRequestBody requestBody, Locale locale) {
+		JsonResult result = new JsonResult();
+		logger.debug("Puhs requestBody => {}", requestBody);
+		
+		return result;
+	}
 
     @Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
     public JsonResult sendPushMessage(PushRequestBody requestBody, Locale locale) {
