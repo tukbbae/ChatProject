@@ -1,0 +1,64 @@
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 23
+    buildToolsVersion "23.0.0"
+
+    defaultConfig {
+        applicationId "com.hmlee.chat.chatclient"
+        minSdkVersion 15
+        targetSdkVersion 23
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    packagingOptions {
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE-FIREBASE.txt'
+        exclude 'META-INF/NOTICE'
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    testCompile 'junit:junit:4.12'
+    compile 'com.android.support:appcompat-v7:23.4.0'
+
+    // Fragment
+    compile 'com.android.support:design:23.3.0'
+    // Google
+    compile 'com.google.android.gms:play-services-auth:9.2.1'
+
+    // Http Client
+    compile('com.google.http-client:google-http-client-android:1.20.0') {
+        exclude module: 'httpclient'
+        exclude module: 'android'
+
+    }
+
+    compile('com.google.http-client:google-http-client-gson:1.20.0') {
+        exclude module: 'httpclient'
+        exclude module: 'gson'
+    }
+
+    compile 'com.google.code.gson:gson:2.+'
+
+    // Firebase
+    compile 'com.google.firebase:firebase-auth:9.2.1'
+    compile 'com.firebase:firebase-client-android:2.3.1'
+    compile 'com.google.firebase:firebase-messaging:9.2.1'
+
+    // Android-Universal-Image-Loader
+    compile 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
+
+    // KoreanTextMatcher lib file
+    compile files('libs/KoreanTextMatcher.jar')
+}
+
+apply plugin: 'com.google.gms.google-services'
