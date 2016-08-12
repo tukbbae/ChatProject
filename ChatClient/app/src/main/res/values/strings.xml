@@ -1,0 +1,76 @@
+<resources>
+    <string name="app_name">ChatClient</string>
+
+    <string name="welcome_msg">Welcome!</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="contacts_permission_rationale">Access to account information is required to sign in.</string>
+    <string name="invite_menu_label">Invite</string>
+    <string name="invitation_message">Please joine me for a friendly chat</string>
+    <string name="invitation_cta">Call to action</string>
+    <string name="invitation_title">Friendly Chat Invite</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="fresh_config">Fresh Config</string>
+    <string name="cause_crash">Cause Crash</string>
+    <string name="banner_ad_unit_id" translatable="false">ca-app-pub-3940256099942544/6300978111</string>
+
+    <string name="drawer_open">Open navigation drawer</string>
+    <string name="drawer_close">Close navigation drawer</string>
+    <string name="action_call">전화걸기</string>
+
+    <!-- 대화 목록 -->
+    <string name="select_all">전체선택</string>
+    <string name="x_selected">개 선택됨</string>
+    <string name="chat_msg">대화문자</string>
+    <string name="info_msg">정보문자</string>
+    <string name="cancel">취소</string>
+    <string name="delete">삭제</string>
+    <string name="ok">확인</string>
+    <string name="action_write_message">새 메시지</string>
+    <string name="delete_message">메시지가 삭제됩니다.</string>
+    <string name="delete_conversation">대화목록을 삭제하시겠습니까?</string>
+    <string name="no_title">(제목없음)</string>
+    <string name="no_content">(내용없음)</string>
+
+    <!-- 메시지 목록 -->
+    <string name="attach_album">이미지</string>
+    <string name="message_input">메시지 입력</string>
+    <string name="send">전송</string>
+    <string name="all_select">전체 선택</string>
+    <string name="back_image">배경</string>
+    <string name="toast_copy_completed">복사되었습니다.</string>
+    <string name="toast_save_failed">실패하였습니다.</string>
+    <string name="toast_msg_deleted">삭제되었습니다.</string>
+    <string name="message_option">메시지 옵션</string>
+
+    <!-- 주소록 -->
+    <string name="common_no_number">발신자 정보 없음</string>
+    <string name="contact_index_initial">ㄱ</string>
+    <string name="contact_search">연락처 검색</string>
+    <string name="contact_confirm">확인</string>
+    <string name="contact_cancel">취소</string>
+    <string name="str_empty_list">검색 결과가 없습니다.</string>
+
+    <!-- 환경 설정 -->
+    <string name="display_info">디스플레이</string>
+    <string name="background_setting">배경화면 설정</string>
+    <string name="text_size">메시지 글자 크기</string>
+    <string name="setting_notice">알림</string>
+    <string name="notice_vibrate">알림 진동</string>
+    <string name="notice_sound">알림 소리</string>
+    <string name="notice_noti">노티피케이션 알림</string>
+    <string name="notice_message">메시지 알림</string>
+    <string name="application_info">어플리케이션 정보</string>
+    <string name="version_info">버전 정보</string>
+
+    <!-- 환경설정 / 테마 및 배경화면 설정 -->
+    <string name="basic_bg">기본 배경</string>
+    <string name="select_bg">배경 선택</string>
+    <string name="photo">사진</string>
+    <string name="photo_taking">사진 촬영</string>
+    <string name="album">앨범</string>
+    <string name="apply_photo_to_bg">적용하기</string>
+    <string name="toast_msg_apply_to_bg">배경화면으로 적용되었습니다.</string>
+    <string name="toast_msg_apply_to_basic_bg">기본화면으로 적용되었습니다.</string>
+    <string name="toast_msg_apply_theme">선택한 테마가 적용되었습니다.</string>
+</resources>
