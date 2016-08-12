@@ -72,16 +72,16 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
         }
 
-        String number = remoteMessage.getData().get("number");
+        String email = remoteMessage.getData().get("email");
         String sender = remoteMessage.getData().get("sender");
         String message = remoteMessage.getData().get("message");
 
-        MessageDB.getInstance().storeMessage(MyFirebaseMessagingService.this, CommonUtils.MESSAGE, number, sender, message, MessageDB.RECEIVE_TYPE);
+        MessageDB.getInstance().storeMessage(MyFirebaseMessagingService.this, CommonUtils.MESSAGE, email, sender, message, MessageDB.RECEIVE_TYPE);
 
         // Also if you intend on generating your own notifications as a result of a received FCM
         // message, here is where that should be initiated. See sendNotification method below.
         if(ConfigSettingPreferences.getInstance(getApplicationContext()).getPrefNoticeNotification()) {
-            ConfigSettingPreferences.getInstance(getApplicationContext()).setPushNotification(0, message, number, sender);
+            ConfigSettingPreferences.getInstance(getApplicationContext()).setPushNotification(0, message, email, sender);
         }
 
         if (!PhoneUtils.isScreenOn(getApplicationContext())

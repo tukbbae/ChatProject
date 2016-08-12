@@ -101,10 +101,8 @@ public class ContactsFragment extends Fragment implements OnClickListener {
         setHasOptionsMenu(true);
         // TODO :: contact list setting
 
-        Contact contact1 = new Contact("tester1", "01011112222", "test@gmail.com", null);
-        Contact contact2 = new Contact("tester2", "01033334444", "test@gmail.com", null);
+        Contact contact1 = new Contact("hmlee", "tukbbae@gmail.com", null);
         sContactList.add(contact1);
-        sContactList.add(contact2);
 
         mAdapter = new ContactsAdapter(mActivity, sContactList, sMultiSelectMode);
         mListView.setAdapter(mAdapter);
@@ -138,7 +136,7 @@ public class ContactsFragment extends Fragment implements OnClickListener {
                     items.add(item);
 
                     // TODO :: contact list click event set
-                    long threadId = MessageDB.getInstance().getThreadId(mActivity, item.getPhoneNumber());
+                    long threadId = MessageDB.getInstance().getThreadId(mActivity, item.getEmail());
                     Intent intent = new Intent(mActivity, MessageActivity.class).putExtra(MessageActivity.THREAD_ID, threadId);
                     startActivity(intent);
 
