@@ -9,9 +9,8 @@ import com.hmlee.chatchat.core.base.BaseController;
 import com.hmlee.chatchat.core.constant.Constants;
 import com.hmlee.chatchat.model.AckRequestBody;
 import com.hmlee.chatchat.model.JsonResult;
-import com.hmlee.chatchat.model.PushRequestBody;
+import com.hmlee.chatchat.model.MessageBody;
 import com.hmlee.chatchat.model.UnreadMessage;
-import com.hmlee.chatchat.model.domain.Address;
 import com.hmlee.chatchat.model.domain.User;
 import com.hmlee.chatchat.service.ChatRestService;
 
@@ -124,8 +123,11 @@ public class ChatRestController extends BaseController {
     }
 	
 	// TODO :: /api/messageRequest API 개발
-    public JsonResult messageRequest(@RequestBody PushRequestBody requestBody, Locale locale) throws Exception {
+    @RequestMapping(value = "/messageRequest")
+    public JsonResult messageRequest(@RequestBody MessageBody requestBody, Locale locale) throws Exception {
         logger.info("[====== Start of messageRequest method ======]");
+        
+		logger.debug("Message requestBody => {}", requestBody);
         
         if(requestBody == null) {
             JsonResult result = new JsonResult();
@@ -134,7 +136,11 @@ public class ChatRestController extends BaseController {
             return result;
         }
         
-        JsonResult result = restService.sendFCMMessage(requestBody, locale);
+        String senderEmail = requestBody.getSenderEmail();
+		String receiverEmail = requestBody.getReceiverEmail();
+		String message = requestBody.getMessage();
+        
+        JsonResult result = restService.sendFCMMessage(senderEmail, receiverEmail, message, locale);
         
         logger.info("[====== End of messageRequest method ======]");
         

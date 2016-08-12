@@ -19,8 +19,6 @@ import com.hmlee.chatchat.core.constant.Constants;
 import com.hmlee.chatchat.core.util.ListUtils;
 import com.hmlee.chatchat.model.AckBody;
 import com.hmlee.chatchat.model.JsonResult;
-import com.hmlee.chatchat.model.MessageBody;
-import com.hmlee.chatchat.model.PushRequestBody;
 import com.hmlee.chatchat.model.UnreadMessage;
 import com.hmlee.chatchat.model.domain.Address;
 import com.hmlee.chatchat.model.domain.Friend;
@@ -121,119 +119,164 @@ public class ChatRestService extends BaseService {
 	
 	// TODO :: messageRequest API 서비스 로직 개발
 	@Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
-	public JsonResult sendFCMMessage(PushRequestBody requestBody, Locale locale) {
+	public JsonResult sendFCMMessage(String senderEmail, String receiverEmail, String message, Locale locale) {
 		JsonResult result = new JsonResult();
-		logger.debug("Puhs requestBody => {}", requestBody);
 		
+		User foundReceiveUser = userRepository.findUserByEmail(receiverEmail);
+		String receiverToken = null;
+		
+		if (foundReceiveUser != null) {
+			receiverToken = foundReceiveUser.getToken();
+		} else {
+			result.setResultCode(Constants.ResponseCode.NOT_FOUND);
+			result.setResultMessage(messageSource.getMessage("app.api.sendMessage.failed.reason.notExistReceiver", null, locale));
+			return result;
+		}
+		
+		DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+		Date sendDate = new Date();
+
+		// save message to db
+//		Message messageObject = new Message(sendMessage);
+//		message = messageRepository.saveAndFlush(messageObject);
+		
+		User foundSendUser = userRepository.findUserByEmail(senderEmail);
+		String senderName = null;
+		if (foundSendUser != null) {
+			senderName = foundSendUser.getName();
+		} else {
+			result.setResultCode(Constants.ResponseCode.NOT_FOUND);
+			result.setResultMessage(messageSource.getMessage("app.api.sendMessage.failed.reason.notExistSender", null, locale));
+			return result;
+		}
+		
+		try {
+			// FCM 발송
+			FCMClient.getInstance().sendFCM(receiverToken, senderName, senderEmail, message);
+		} catch (Exception e) {
+			logger.error("## IO.EXT.FCM Exception");
+			e.printStackTrace();
+			result.setResultCode(Constants.ResponseCode.SERVER_ERROR);
+			result.setResultMessage(
+					messageSource.getMessage("app.api.response.description.internalServerError", null, locale));
+			return result;
+		}
+		
+//		String[] receivers = mailReceiverList.toArray(new String[mailReceiverList.size()]);
+//		sendGeneralMessageMail(senderAddress, receivers, sendMessage);
+
+		result.setResultCode(Constants.ResponseCode.SUCCESS);
+		result.setResultMessage(messageSource.getMessage("app.api.response.description.success", null, locale));
+
 		return result;
 	}
 
-    @Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
-    public JsonResult sendPushMessage(PushRequestBody requestBody, Locale locale) {
-
-        JsonResult result = new JsonResult();
-        logger.debug("Puhs requestBody => {}", requestBody);
-
-        // 발송할 메시지 목록 중 첫번째 메시지 정보에서 발신자 이메일을 가져온다.
-        // FIXME : 추후 수정이 필요한 항목
-        MessageBody firstReceiverMessage = requestBody.getPushList().get(0);
-        String senderEmail = firstReceiverMessage.getEmail();
-        Address senderAddress = addressRepository.findAddressByEmail(senderEmail);
-        if (senderAddress == null) {
-            result.setResultCode(Constants.ResponseCode.NOT_FOUND);
-            result.setResultMessage(messageSource.getMessage("app.api.sendMessage.failed.reason.notExistSender", null, locale));
-            return result;
-        }
-
-        String type = requestBody.getType();
-
-        if (StringUtils.isBlank(type)) {
-            result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
-            result.setResultMessage(messageSource.getMessage("app.api.response.description.badRequest", null, locale));
-            return result;
-        }
-
-        String sendMessage = null;
-        DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-        Date sendDate = new Date();
-        if (Constants.MessageClass.NORMAL.equals(type)) {
-            sendMessage = firstReceiverMessage.getMessage();
-        } else {
-            // TODO :: 추후 다른 타입의 메시지 올 경우 처리 필요
-        }
-
-        // save message to db
-        Message message = new Message(sendMessage);
-        message = messageRepository.saveAndFlush(message);
-
-        // 수신자의 단말 유형에 따라 발신 목록을 구성
-        List<String> fcmReceiverList = new ArrayList<>();
-        List<String> mailReceiverList = new ArrayList<>();
-        for (MessageBody messageBody : requestBody.getPushList()) {
-            Address receiver = addressRepository.findAddressByEmail(messageBody.getEmail());
-
-            if (receiver != null) {
-
-                Statistic statistic = new Statistic();
-                statistic.setSender(senderAddress.getName());
-                statistic.setSenderPhoneNumber(senderAddress.getPhoneNumber());
-                statistic.setReceiver(receiver.getName());
-                statistic.setReceiverPhoneNumber(receiver.getPhoneNumber());
-                statistic.setSendDate(sendDate);
-                statistic.setMsgId(message.getIdx());
-
-                if (receiver.getRegiId() != null) {
-                    if (Constants.DeviceType.IOS.equalsIgnoreCase(receiver.getDeviceType())) {
-                        // TODO :: IOS 단말 전송 기능 개발
-                    } else {
-                        fcmReceiverList.add(receiver.getRegiId());
-                        statistic.setReceiveDate(new Date());
-                        statistic.setIsRead(true);
-                    }
-                    statistic.setType(Constants.MessageType.PUSH_MESSAGE);
-                } else {
-                    mailReceiverList.add(receiver.getEmail());
-                    statistic.setIsRead(true);
-                    statistic.setType(Constants.MessageType.MAIL);
-                }
-
-                statisticRepository.save(statistic);
-            } else {
-                result.setResultCode(Constants.ResponseCode.NOT_FOUND);
-                result.setResultMessage(messageSource.getMessage("app.api.sendMessage.failed.reason.notExistReceiver", null, locale));
-            }
-        }
-        statisticRepository.flush();
-
-        if (fcmReceiverList.size() > 0) {
-            try {
-                // FCM 발송
-                FCMClient.getInstance().sendFCM(fcmReceiverList, senderAddress.getName(), senderEmail, sendMessage, type);
-            } catch (Exception e) {
-                logger.error("## IO.EXT.FCM Exception");
-                e.printStackTrace();
-                result.setResultCode(Constants.ResponseCode.SERVER_ERROR);
-                result.setResultMessage(messageSource.getMessage("app.api.response.description.internalServerError", null, locale));
-                return result;
-            }
-        }
-
-        if (mailReceiverList.size() > 0) {
-            // 메일 발송
-            String[] receivers = mailReceiverList.toArray(new String[mailReceiverList.size()]);
-            sendGeneralMessageMail(senderAddress, receivers, sendMessage);
-        }
-
-        result.setResultCode(Constants.ResponseCode.SUCCESS);
-        if (Constants.MessageClass.NORMAL.equals(type)) {
-            result.setResultMessage(messageSource.getMessage("app.api.response.description.success", null, locale));
-        } else {
-            String url = "http://"+serverHost+":"+serverPort+"/attendance/"+dateFormat.format(sendDate);
-            result.setResultMessage(url);
-        }
-
-        return result;
-    }
+//    @Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
+//    public JsonResult sendPushMessage(PushRequestBody requestBody, Locale locale) {
+//
+//        JsonResult result = new JsonResult();
+//        logger.debug("Puhs requestBody => {}", requestBody);
+//
+//        // 발송할 메시지 목록 중 첫번째 메시지 정보에서 발신자 이메일을 가져온다.
+//        // FIXME : 추후 수정이 필요한 항목
+//        MessageBody firstReceiverMessage = requestBody.getPushList().get(0);
+//        String senderEmail = firstReceiverMessage.getEmail();
+//        Address senderAddress = addressRepository.findAddressByEmail(senderEmail);
+//        if (senderAddress == null) {
+//            result.setResultCode(Constants.ResponseCode.NOT_FOUND);
+//            result.setResultMessage(messageSource.getMessage("app.api.sendMessage.failed.reason.notExistSender", null, locale));
+//            return result;
+//        }
+//
+//        String type = requestBody.getType();
+//
+//        if (StringUtils.isBlank(type)) {
+//            result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
+//            result.setResultMessage(messageSource.getMessage("app.api.response.description.badRequest", null, locale));
+//            return result;
+//        }
+//
+//        String sendMessage = null;
+//        DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+//        Date sendDate = new Date();
+//        if (Constants.MessageClass.NORMAL.equals(type)) {
+//            sendMessage = firstReceiverMessage.getMessage();
+//        } else {
+//            // TODO :: 추후 다른 타입의 메시지 올 경우 처리 필요
+//        }
+//
+//        // save message to db
+//        Message message = new Message(sendMessage);
+//        message = messageRepository.saveAndFlush(message);
+//
+//        // 수신자의 단말 유형에 따라 발신 목록을 구성
+//        List<String> fcmReceiverList = new ArrayList<>();
+//        List<String> mailReceiverList = new ArrayList<>();
+//        for (MessageBody messageBody : requestBody.getPushList()) {
+//            Address receiver = addressRepository.findAddressByEmail(messageBody.getEmail());
+//
+//            if (receiver != null) {
+//
+//                Statistic statistic = new Statistic();
+//                statistic.setSender(senderAddress.getName());
+//                statistic.setSenderPhoneNumber(senderAddress.getPhoneNumber());
+//                statistic.setReceiver(receiver.getName());
+//                statistic.setReceiverPhoneNumber(receiver.getPhoneNumber());
+//                statistic.setSendDate(sendDate);
+//                statistic.setMsgId(message.getIdx());
+//
+//                if (receiver.getRegiId() != null) {
+//                    if (Constants.DeviceType.IOS.equalsIgnoreCase(receiver.getDeviceType())) {
+//                        // TODO :: IOS 단말 전송 기능 개발
+//                    } else {
+//                        fcmReceiverList.add(receiver.getRegiId());
+//                        statistic.setReceiveDate(new Date());
+//                        statistic.setIsRead(true);
+//                    }
+//                    statistic.setType(Constants.MessageType.PUSH_MESSAGE);
+//                } else {
+//                    mailReceiverList.add(receiver.getEmail());
+//                    statistic.setIsRead(true);
+//                    statistic.setType(Constants.MessageType.MAIL);
+//                }
+//
+//                statisticRepository.save(statistic);
+//            } else {
+//                result.setResultCode(Constants.ResponseCode.NOT_FOUND);
+//                result.setResultMessage(messageSource.getMessage("app.api.sendMessage.failed.reason.notExistReceiver", null, locale));
+//            }
+//        }
+//        statisticRepository.flush();
+//
+//        if (fcmReceiverList.size() > 0) {
+//            try {
+//                // FCM 발송
+//                FCMClient.getInstance().sendFCM(fcmReceiverList, senderAddress.getName(), senderEmail, sendMessage, type);
+//            } catch (Exception e) {
+//                logger.error("## IO.EXT.FCM Exception");
+//                e.printStackTrace();
+//                result.setResultCode(Constants.ResponseCode.SERVER_ERROR);
+//                result.setResultMessage(messageSource.getMessage("app.api.response.description.internalServerError", null, locale));
+//                return result;
+//            }
+//        }
+//
+//        if (mailReceiverList.size() > 0) {
+//            // 메일 발송
+//            String[] receivers = mailReceiverList.toArray(new String[mailReceiverList.size()]);
+//            sendGeneralMessageMail(senderAddress, receivers, sendMessage);
+//        }
+//
+//        result.setResultCode(Constants.ResponseCode.SUCCESS);
+//        if (Constants.MessageClass.NORMAL.equals(type)) {
+//            result.setResultMessage(messageSource.getMessage("app.api.response.description.success", null, locale));
+//        } else {
+//            String url = "http://"+serverHost+":"+serverPort+"/attendance/"+dateFormat.format(sendDate);
+//            result.setResultMessage(url);
+//        }
+//
+//        return result;
+//    }
     
     private boolean sendGeneralMessageMail(Address sender, String[] receivers, String content) {
         Locale locale = LocaleContextHolder.getLocale();

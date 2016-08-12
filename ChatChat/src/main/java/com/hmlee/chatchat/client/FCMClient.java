@@ -7,10 +7,8 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hmlee.chatchat.model.FCMBody;
@@ -18,6 +16,7 @@ import com.hmlee.chatchat.model.FCMBody;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RequestBody;
 
 /**
  * Created by hmlee
@@ -25,7 +24,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class FCMClient {
 
-    private final static String API_KEY = "AIzaSyD1TY9ZO5JBz3A7Ad8_nN7hRNenQo2c6Ss";
+	// Firebase FCM API Key
+    private final static String API_KEY = "AIzaSyCEjH-fwSbgKqnZg0qaSHFTq9hGDAgPM1k";
     private static FCMClient fcmClient = null;
 
     private static FCMBody fcmBody;
@@ -40,17 +40,11 @@ public class FCMClient {
         return fcmClient;
     }
 
-    public void sendFCM(List<String> registrationIds, String senderName, String senderMail, String msg, String type) {
-        if (registrationIds == null || registrationIds.size() == 0) {
-            throw new RuntimeException("Not exist registration id list");
-        }
+    public void sendFCM(String token, String senderName, String senderMail, String msg) {
 
         fcmBody = new FCMBody();
-        for (String regiId : registrationIds) {
-        	fcmBody.addRegId(regiId);
-        }
-
-        fcmBody.createData(type, senderName, senderMail, msg);
+        fcmBody.setTo(token);
+        fcmBody.createData(senderMail, senderName, msg);
 
         sThread = new Thread(null, sending, "SEND");
         sThread.start();
@@ -63,6 +57,8 @@ public class FCMClient {
         @Override
         public void run() {
             String endpoint = "https://fcm.googleapis.com/fcm/send";
+            
+            String aa = "\"{\"to\":\"eB3rSJz-l9E:APA91bGv305OcuKBWt279DGUGJ7QsMFAiIsuCf3UDdaH4jAtJzS_KVney35FUDgN26bXT-umtS9k3LEZglgETdKKWO4fDQ1D5NVCCVDvUdvGV49JEaeNecK0o8zFKzvBrwr974ZhEcRx\",\"notification\":{\"body\":\"Yellow\"} \"priority\":\"10\"}";
 
             URL url = null;
             try {
@@ -70,18 +66,18 @@ public class FCMClient {
             } catch (MalformedURLException e) {
                 e.printStackTrace();
             }
-
-            HttpURLConnection conn = null;
+            
+            HttpsURLConnection conn = null;
             try {
-                conn = (HttpURLConnection) url.openConnection();
+                conn = (HttpsURLConnection) url.openConnection();
                 conn.setDoOutput(true);
                 conn.setUseCaches(false);
                 conn.setRequestMethod("POST");
-                conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                conn.setRequestProperty("Content-Type", "application/json");
                 conn.setRequestProperty("Authorization", "key=" + URLEncoder.encode(API_KEY, "utf-8"));
                 ObjectMapper mapper = new ObjectMapper();
                 OutputStream wr = new DataOutputStream(conn.getOutputStream());
-                mapper.writeValue(wr, fcmBody);
+                mapper.writeValue(wr, aa);
                 wr.flush();
                 wr.close();
 
