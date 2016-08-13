@@ -31,8 +31,6 @@ import com.hmlee.chatchat.repository.MessageRepository;
 import com.hmlee.chatchat.repository.StatisticRepository;
 import com.hmlee.chatchat.repository.UserRepository;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 import javax.mail.internet.MimeMessage;
@@ -121,50 +119,56 @@ public class ChatRestService extends BaseService {
 	@Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
 	public JsonResult sendFCMMessage(String senderEmail, String receiverEmail, String message, Locale locale) {
 		JsonResult result = new JsonResult();
-		
+
 		User foundReceiveUser = userRepository.findUserByEmail(receiverEmail);
 		String receiverToken = null;
-		
+
 		if (foundReceiveUser != null) {
 			receiverToken = foundReceiveUser.getToken();
 		} else {
 			result.setResultCode(Constants.ResponseCode.NOT_FOUND);
-			result.setResultMessage(messageSource.getMessage("app.api.sendMessage.failed.reason.notExistReceiver", null, locale));
+			result.setResultMessage(
+					messageSource.getMessage("app.api.sendMessage.failed.reason.notExistReceiver", null, locale));
 			return result;
 		}
-		
-		DateFormat dateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-		Date sendDate = new Date();
 
 		// save message to db
-//		Message messageObject = new Message(sendMessage);
-//		message = messageRepository.saveAndFlush(messageObject);
-		
+		Message messageObject = new Message(message);
+		messageObject = messageRepository.saveAndFlush(messageObject);
+
 		User foundSendUser = userRepository.findUserByEmail(senderEmail);
 		String senderName = null;
 		if (foundSendUser != null) {
 			senderName = foundSendUser.getName();
 		} else {
 			result.setResultCode(Constants.ResponseCode.NOT_FOUND);
-			result.setResultMessage(messageSource.getMessage("app.api.sendMessage.failed.reason.notExistSender", null, locale));
-			return result;
-		}
-		
-		try {
-			// FCM 발송
-			FCMClient.getInstance().sendFCM(receiverToken, senderName, senderEmail, message);
-		} catch (Exception e) {
-			logger.error("## IO.EXT.FCM Exception");
-			e.printStackTrace();
-			result.setResultCode(Constants.ResponseCode.SERVER_ERROR);
 			result.setResultMessage(
-					messageSource.getMessage("app.api.response.description.internalServerError", null, locale));
+					messageSource.getMessage("app.api.sendMessage.failed.reason.notExistSender", null, locale));
 			return result;
 		}
 		
-//		String[] receivers = mailReceiverList.toArray(new String[mailReceiverList.size()]);
-//		sendGeneralMessageMail(senderAddress, receivers, sendMessage);
-
+		String receiverDeviceType = foundReceiveUser.getDevice_type();
+		
+		if (receiverDeviceType.equalsIgnoreCase("A")) {
+			try {
+				// FCM 발송
+				FCMClient.getInstance().sendFCM(receiverToken, senderName, senderEmail, message);
+			} catch (Exception e) {
+				logger.error("## IO.EXT.FCM Exception");
+				e.printStackTrace();
+				result.setResultCode(Constants.ResponseCode.SERVER_ERROR);
+				result.setResultMessage(
+						messageSource.getMessage("app.api.response.description.internalServerError", null, locale));
+				return result;
+			}
+		} else if (receiverDeviceType.equalsIgnoreCase("W")) {
+			String[] receivers = new String[1];
+			receivers[0] = senderEmail;
+			sendGeneralMessageMail(foundSendUser, receivers, message);
+		} else {
+			// TODO :: other device processing
+		}
+		
 		result.setResultCode(Constants.ResponseCode.SUCCESS);
 		result.setResultMessage(messageSource.getMessage("app.api.response.description.success", null, locale));
 
@@ -278,7 +282,7 @@ public class ChatRestService extends BaseService {
 //        return result;
 //    }
     
-    private boolean sendGeneralMessageMail(Address sender, String[] receivers, String content) {
+    private boolean sendGeneralMessageMail(User sender, String[] receivers, String content) {
         Locale locale = LocaleContextHolder.getLocale();
         final Context ctx = new Context(locale);
         ctx.setVariable("sendDate", new Date());
