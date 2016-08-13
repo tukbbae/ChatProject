@@ -1,6 +1,5 @@
 package com.hmlee.chatchat.service;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
@@ -20,12 +19,10 @@ import com.hmlee.chatchat.core.util.ListUtils;
 import com.hmlee.chatchat.model.AckBody;
 import com.hmlee.chatchat.model.JsonResult;
 import com.hmlee.chatchat.model.UnreadMessage;
-import com.hmlee.chatchat.model.domain.Address;
 import com.hmlee.chatchat.model.domain.Friend;
 import com.hmlee.chatchat.model.domain.Message;
 import com.hmlee.chatchat.model.domain.Statistic;
 import com.hmlee.chatchat.model.domain.User;
-import com.hmlee.chatchat.repository.AddressRepository;
 import com.hmlee.chatchat.repository.FriendRepository;
 import com.hmlee.chatchat.repository.MessageRepository;
 import com.hmlee.chatchat.repository.StatisticRepository;
@@ -49,9 +46,6 @@ public class ChatRestService extends BaseService {
     @Autowired
     private MessageSource messageSource;
 
-    @Autowired
-    private AddressRepository addressRepository;
-    
     @Autowired
     private UserRepository userRepository;
     
@@ -316,25 +310,11 @@ public class ChatRestService extends BaseService {
         }
     }
 
-    public List<Address> getAddressList(String did) {
-        Iterable<Address> iterable = null;
-        if (StringUtils.isBlank(did)) {
-            iterable = addressRepository.findAll();
-        } else {
-//            Department department = departmentRepository.findOne(Long.parseLong(did));
-//            if (department == null) {
-//                return null;
-//            }
-        }
-
-        return ListUtils.toList(iterable);
-    }
-
     @Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
     public void updateMessageReadStatus(List<AckBody> ackList) {
         for (AckBody ack : ackList) {
-            Address address = addressRepository.findAddressByregiId(ack.getRegi_id());
-            Statistic statistic = statisticRepository.findMessageWithReadStatus(Long.parseLong(ack.getMsg_id()), address.getPhoneNumber(), false);
+            User user = userRepository.findUserByToken(ack.getRegi_id());
+            Statistic statistic = statisticRepository.findMessageWithReadStatus(Long.parseLong(ack.getMsg_id()), user.getEmail(), false);
             if (statistic != null) {
                 statistic.setIsRead(true);
                 statisticRepository.save(statistic);
@@ -344,8 +324,8 @@ public class ChatRestService extends BaseService {
     }
 
     public List<UnreadMessage> findUnreadMessageList(String regiId) {
-        Address address = addressRepository.findAddressByregiId(regiId);
-        List<Statistic> statisticList = statisticRepository.findUnreadMessage(address.getPhoneNumber());
+    	User user = userRepository.findUserByToken(regiId);
+        List<Statistic> statisticList = statisticRepository.findUnreadMessage(user.getEmail());
         List<UnreadMessage> unreadList = new ArrayList<UnreadMessage>();
         for (Statistic statistic : statisticList) {
             Message message = messageRepository.findOne(statistic.getMsgId());
