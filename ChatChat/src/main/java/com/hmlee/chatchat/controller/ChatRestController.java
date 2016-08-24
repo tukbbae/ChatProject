@@ -91,7 +91,7 @@ public class ChatRestController extends BaseController {
 			return result;
 		}
 
-		if (restService.registerDeviceIdentifier(email, name, token, deviceType)) {
+		if (restService.registerUser(email, name, token, deviceType)) {
 			result.setResultCode(Constants.ResponseCode.SUCCESS);
 			result.setResultMessage(messageSource.getMessage("app.api.response.description.success", null, locale));
 		} else {
@@ -100,6 +100,56 @@ public class ChatRestController extends BaseController {
 		}
 
 		logger.info("[====== End of registerRequest method ======]");
+		return result;
+	}
+	
+	@RequestMapping(value = "/updateUserInfo", method = RequestMethod.POST)
+	public JsonResult updateUserInfo(@RequestBody Map<String, String> requestBody, Locale locale) throws Exception {
+		logger.info("[====== Start of updateUserInfo method ======]");
+
+		String email = requestBody.get("email");
+		String name = requestBody.get("name");
+		String token = requestBody.get("token");
+		String deviceType = requestBody.get("device_type");
+		
+		JsonResult result = new JsonResult();
+		
+		if (email == null) {
+			result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
+			result.setResultMessage(messageSource
+					.getMessage("app.api.registerRegiId.failed.reason.emailIsRequired", null, locale));
+			return result;
+		}
+		
+		if (name == null) {
+			result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
+			result.setResultMessage(messageSource
+					.getMessage("app.api.registerRegiId.failed.reason.nameIsRequired", null, locale));
+			return result;
+		}
+		
+		if (token == null) {
+			result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
+			result.setResultMessage(messageSource.getMessage("app.api.registerRegiId.failed.reason.tokenIsRequeired", null, locale));
+			return result;
+		}
+
+		if (deviceType == null) {
+			result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
+			result.setResultMessage(messageSource
+					.getMessage("app.api.registerRegiId.failed.reason.deviceTypeIsRequired", null, locale));
+			return result;
+		}
+
+		if (restService.updateUser(email, name, token, deviceType)) {
+			result.setResultCode(Constants.ResponseCode.SUCCESS);
+			result.setResultMessage(messageSource.getMessage("app.api.response.description.success", null, locale));
+		} else {
+			result.setResultCode(Constants.ResponseCode.FAILED);
+			result.setResultMessage(messageSource.getMessage("app.api.response.description.failed", null, locale));
+		}
+		
+		logger.info("[====== End of updateUserInfo method ======]");
 		return result;
 	}
 	
@@ -136,7 +186,6 @@ public class ChatRestController extends BaseController {
 		return result;
     }
 	
-	// TODO :: /api/messageRequest API 개발
     @RequestMapping(value = "/messageRequest")
     public JsonResult messageRequest(@RequestBody MessageBody requestBody, Locale locale) throws Exception {
         logger.info("[====== Start of messageRequest method ======]");
@@ -160,29 +209,6 @@ public class ChatRestController extends BaseController {
         
         return result;
     }
-    
-//    @RequestMapping(value = "/pushRequest")
-//    public JsonResult sendPushMessage(@RequestBody PushRequestBody requestBody, Locale locale) throws Exception {
-//        logger.info("[====== Start of sendPushMessage method ======]");
-//
-//        if(requestBody == null) {
-//            JsonResult result = new JsonResult();
-//            result.setResultCode(Constants.ResponseCode.BAD_REQUEST);
-//            result.setResultMessage(messageSource.getMessage("app.api.response.description.badRequest", null, locale));
-//            return result;
-//        }
-//
-//        JsonResult result = restService.sendPushMessage(requestBody, locale);
-//
-//        logger.info("[====== End of sendPushMessage method ======]");
-//
-//        return result;
-//    }
-
-//    @RequestMapping(value = "/addressRequest")
-//    public List<Address> getAddressList(@RequestParam(value = "did", required = false, defaultValue = "") String did, Locale locale) throws  Exception {
-//        return restService.getAddressList(did);
-//    }
 
     @RequestMapping(value = "/ack_message")
     public JsonResult ackMessage(@RequestBody AckRequestBody requestBody, Locale locale) throws Exception {

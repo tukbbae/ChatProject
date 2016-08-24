@@ -77,12 +77,27 @@ public class ChatRestService extends BaseService {
 	}
     
     @Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
-    public boolean registerDeviceIdentifier(String email, String name, String token, String deviceType) {
+    public boolean registerUser(String email, String name, String token, String deviceType) {
 
         User foundUser = userRepository.findUserByEmail(email);
         if (foundUser == null) {
         	User newUser = new User(email, name, token, deviceType);
         	userRepository.save(newUser);
+            return true;
+        } else {
+        	return false;
+        }
+    }
+    
+    @Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
+    public boolean updateUser(String email, String name, String token, String deviceType) {
+
+        User foundUser = userRepository.findUserByEmail(email);
+        if (foundUser != null) {
+        	foundUser.setName(name);
+        	foundUser.setToken(token);
+        	foundUser.setDevice_type(deviceType);
+        	userRepository.save(foundUser);
             return true;
         } else {
         	return false;
@@ -109,7 +124,6 @@ public class ChatRestService extends BaseService {
 		}
 	}
 	
-	// TODO :: messageRequest API 서비스 로직 개발
 	@Transactional(rollbackFor = { Exception.class }, propagation = Propagation.REQUIRED)
 	public JsonResult sendFCMMessage(String senderEmail, String receiverEmail, String message, Locale locale) {
 		JsonResult result = new JsonResult();
@@ -225,7 +239,7 @@ public class ChatRestService extends BaseService {
 //
 //                if (receiver.getRegiId() != null) {
 //                    if (Constants.DeviceType.IOS.equalsIgnoreCase(receiver.getDeviceType())) {
-//                        // TODO :: IOS 단말 전송 기능 개발
+//	
 //                    } else {
 //                        fcmReceiverList.add(receiver.getRegiId());
 //                        statistic.setReceiveDate(new Date());
