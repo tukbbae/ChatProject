@@ -3,6 +3,7 @@ package com.hmlee.chat.chatclient;
 import android.app.Activity;
 import android.database.Cursor;
 import android.graphics.drawable.AnimationDrawable;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -19,6 +20,10 @@ import android.widget.Toast;
 import com.hmlee.chat.chatclient.db.DataChange;
 import com.hmlee.chat.chatclient.db.DataObserver;
 import com.hmlee.chat.chatclient.db.MessageDB;
+import com.hmlee.chat.chatclient.db.RecipientIdCache;
+import com.hmlee.chat.chatclient.http.HttpClient;
+import com.hmlee.chat.chatclient.http.model.CommonResponse;
+import com.hmlee.chat.chatclient.http.model.MessageRequest;
 import com.hmlee.chat.chatclient.utils.CommonUtils;
 import com.hmlee.chat.chatclient.utils.ConfigSettingPreferences;
 import com.hmlee.chat.chatclient.widget.MonitoringEditText;
@@ -27,10 +32,18 @@ import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.assist.ImageScaleType;
 import com.nostra13.universalimageloader.core.display.SimpleBitmapDisplayer;
 
+import java.io.IOException;
+import java.net.ConnectException;
+
 public class MessageFragment extends Fragment implements DataChange, MonitoringEditText.OnPasteListener {
 
     public static final String RESPONSE_MSG = "response_msg";
-    public static final String API_ID_PUSH_REQUEST = "push_request";
+    public static final String API_ID_MESSAGE_REQUEST = "message_request";
+
+    private SendMessageTask mSendTask;
+
+    // HTTP Client
+    private HttpClient mHttpClient;
 
     private Activity mActivity;
     private MessageAdapter mAdapter;
@@ -44,24 +57,23 @@ public class MessageFragment extends Fragment implements DataChange, MonitoringE
 
     private DisplayImageOptions mOptions;
     private ImageLoader mImageLoader = ImageLoader.getInstance();
-    
-    private int mSendType = 0; // 0 normal 1 attendance 2 etc
+
+    // TODO :: 추후 다른 메시지 타입이 있을 시 처리하기 위한 Type
+    private int mSendType = 0; // 0 normal
     
     final Handler responseHandler = new Handler() {
         public void handleMessage(Message msg) {
             mSendButton.setVisibility(View.VISIBLE);
             mImgProgress.setVisibility(View.GONE);
 
-            // TODO :: Handler 구현
             String response = msg.getData().getString(RESPONSE_MSG);
-            if (response.equals(API_ID_PUSH_REQUEST)) {
-                int success = msg.getData().getInt("success");
-                int failure = msg.getData().getInt("failure");
+            if (response.equals(API_ID_MESSAGE_REQUEST)) {
+                boolean result = msg.getData().getBoolean("result");
 
-                if (success >= 1) {
-//                    Toast.makeText(mActivity, "푸시 전송에 성공하였습니다.", Toast.LENGTH_SHORT).show();
-                } else if (success == 0 && failure >= 1) {
-                    Toast.makeText(mActivity, "푸시 전송에 실패하였습니다.", Toast.LENGTH_SHORT).show();
+                if (result) {
+//                    Toast.makeText(mActivity, "메시지 전송에 성공하였습니다.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(mActivity, "메시지 전송에 실패하였습니다.", Toast.LENGTH_SHORT).show();
                 }
 
             }
@@ -78,6 +90,7 @@ public class MessageFragment extends Fragment implements DataChange, MonitoringE
 
         findViews(rootView);
         initViews();
+        initHttpModule();
 
         if (mThreadId > 0) {
             queryMessages(mThreadId);
@@ -114,6 +127,10 @@ public class MessageFragment extends Fragment implements DataChange, MonitoringE
                 .imageScaleType(ImageScaleType.EXACTLY).resetViewBeforeLoading(true).considerExifParams(true)
                 .displayer(new SimpleBitmapDisplayer()).build();
         mInputMessage.setOnPasteListener(this);
+    }
+
+    private void initHttpModule() {
+        mHttpClient = new HttpClient(mActivity, CommonUtils.SERVER_URL, null);
     }
 
     @Override
@@ -209,26 +226,80 @@ public class MessageFragment extends Fragment implements DataChange, MonitoringE
             AnimationDrawable frameAnimation = (AnimationDrawable) mImgProgress.getBackground();
             frameAnimation.start();
 
-            sendPushMessage(message, mSendType);
+            String receiverName = RecipientIdCache.getEmail(Long.toString(mThreadId)).names;
+            String receiveEmail = RecipientIdCache.getEmail(Long.toString(mThreadId)).emails;
+            String senderEmail = ConfigSettingPreferences.getInstance(mActivity).getPrefsUserEmail();
+
+            mSendTask = new SendMessageTask(senderEmail, receiveEmail, receiverName, message);
+            mSendTask.execute((Void) null);
         } else {
             Toast.makeText(mActivity, "메시지를 입력해주세요", Toast.LENGTH_SHORT).show();
         }
     }
 
-    public void sendPushMessage(final String message, int type) {
-        // TODO :: send push 기능 구현
-        mInputMessage.setText("");
+    public class SendMessageTask extends AsyncTask<Void, Void, Boolean> {
 
-        mThreadId = MessageDB.getInstance().storeMessage(mActivity, CommonUtils.MESSAGE, "01047323972",
-                        "hmlee", message, MessageDB.SEND_TYPE);
+        private final String mSenderEmail;
+        private final String mReceiverEmail;
+        private final String mReceiverName;
+        private final String mContentMessage;
 
-        Message msg = responseHandler.obtainMessage();
-        Bundle bundle = new Bundle();
-        bundle.putString(RESPONSE_MSG, API_ID_PUSH_REQUEST);
-        bundle.putInt("success", 1);
-        bundle.putInt("failure", 0);
-        msg.setData(bundle);
-        responseHandler.sendMessage(msg);
+        public SendMessageTask(String mSenderEmail, String mReceiverEmail, String mReceiverName, String mContentMessage) {
+            this.mSenderEmail = mSenderEmail;
+            this.mReceiverEmail = mReceiverEmail;
+            this.mReceiverName = mReceiverName;
+            this.mContentMessage = mContentMessage;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            boolean result = false;
+            MessageRequest request = new MessageRequest(mSenderEmail, mReceiverEmail, mContentMessage);
+
+            try {
+                CommonResponse response = mHttpClient.sendRequest("/api/messageRequest", MessageRequest.class, CommonResponse.class, request);
+
+                if (response.getResultCode().equals("200")) {
+                    // 메시지 전송 성공
+                    result = true;
+                } else if (response.getResultCode().equals("404")) {
+                    // 메시지 전송 실패
+                    result = false;
+                } else {
+                    // TODO :: 예외 에러코드 처리
+                    result = false;
+                }
+            } catch (ConnectException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(final Boolean success) {
+            mSendTask = null;
+
+            if (success) {
+                mInputMessage.setText("");
+                mThreadId = MessageDB.getInstance().storeMessage(mActivity, CommonUtils.MESSAGE, mReceiverEmail,
+                        mReceiverName, mContentMessage, MessageDB.SEND_TYPE);
+            }
+
+            Message msg = responseHandler.obtainMessage();
+            Bundle bundle = new Bundle();
+            bundle.putString(RESPONSE_MSG, API_ID_MESSAGE_REQUEST);
+            bundle.putBoolean("result", success);
+            msg.setData(bundle);
+            responseHandler.sendMessage(msg);
+        }
+
+        @Override
+        protected void onCancelled() {
+            mSendTask = null;
+        }
     }
 
 

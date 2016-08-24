@@ -63,12 +63,12 @@ public class MessageDB implements BaseColumns, DB_Constant {
         return dbHelper;
     }
 
-    public long insertThreads(Context context, String address, String names) {
+    public long insertThreads(Context context, String email, String names) {
         ContentValues values = new ContentValues();
-        values.put(THREADS_FIELD_THREAD_EMAIL, address);
+        values.put(THREADS_FIELD_THREAD_EMAIL, email);
         values.put(THREADS_FIELD_THREAD_NAMES, names);
         try {
-            long id = getThreadId(context, address);
+            long id = getThreadId(context, email);
             if (id == -1) {
                 id = insert(context, values, THREADS);
             } else {
@@ -140,7 +140,7 @@ public class MessageDB implements BaseColumns, DB_Constant {
     }
 
     public long insertConversation(Context context, long threadId, String snippet, int status, int msgCount,
-                                   int unreadCount, int favority, int blocked) {
+            int unreadCount, int favority, int blocked) {
         long id = -1;
         ContentValues values = new ContentValues();
         values.put(CONVERSATION_FIELD_THREAD_ID, threadId);
@@ -189,15 +189,15 @@ public class MessageDB implements BaseColumns, DB_Constant {
         return id;
     }
 
-    public long storeMessage(Context context, String message_type, String address, String names, String body, int type) {
+    public long storeMessage(Context context, String message_type, String email, String names, String body, int type) {
         long threadID = -1L;
         try {
-            threadID = insertThreads(context, address, names);
+            threadID = insertThreads(context, email, names);
             RecipientIdCache.fill(context);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        insertMessages(context, message_type, threadID, address, names, body, type, 0);
+        insertMessages(context, message_type, threadID, email, names, body, type, 0);
         onChange();
         return threadID;
     }
@@ -206,12 +206,12 @@ public class MessageDB implements BaseColumns, DB_Constant {
         DataObserver.getInstance().onChange();
     }
 
-    public long insertMessages(Context context, String message_type, long threadId, String address, String names,
-                               String body, int status, int read) {
+    public long insertMessages(Context context, String message_type, long threadId, String email, String names,
+            String body, int status, int read) {
         ContentValues values = new ContentValues();
         values.put(MESSAGES_FIELD_THREAD_ID, threadId);
         values.put(MESSAGES_FIELD_TYPE, message_type);
-        values.put(MESSAGES_FIELD_EMAIL, address);
+        values.put(MESSAGES_FIELD_EMAIL, email);
         values.put(MESSAGES_FIELD_NAMES, names);
         values.put(MESSAGES_FIELD_BODY, body);
         values.put(MESSAGES_FIELD_DATE, System.currentTimeMillis());

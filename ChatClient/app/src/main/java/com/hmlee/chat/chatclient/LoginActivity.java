@@ -3,6 +3,7 @@ package com.hmlee.chat.chatclient;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -29,13 +30,22 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.hmlee.chat.chatclient.http.HttpClient;
+import com.hmlee.chat.chatclient.http.model.CommonResponse;
+import com.hmlee.chat.chatclient.http.model.IsRegisterUser;
+import com.hmlee.chat.chatclient.http.model.RegisterRequest;
+import com.hmlee.chat.chatclient.utils.CommonUtils;
+import com.hmlee.chat.chatclient.utils.ConfigSettingPreferences;
+
+import java.io.IOException;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 
 import static android.Manifest.permission.READ_CONTACTS;
 
 /**
- * A login screen that offers login via email/password.
+ * A login screen that offers login via email/name.
  */
 public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<Cursor> {
 
@@ -45,33 +55,42 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private static final int REQUEST_READ_CONTACTS = 0;
 
     /**
-     * A dummy authentication store containing known user names and passwords.
-     * TODO: remove after connecting to a real authentication system.
-     */
-    private static final String[] DUMMY_CREDENTIALS = new String[]{
-            "foo@example.com:hello", "bar@example.com:world"
-    };
-    /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private UserLoginTask mAuthTask = null;
 
     // UI references.
     private AutoCompleteTextView mEmailView;
-    private EditText mPasswordView;
+    private EditText mNameView;
+    private Button mEmailSignInButton;
     private View mProgressView;
     private View mLoginFormView;
+
+    // HTTP Client
+    private HttpClient mHttpClient;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
-        // Set up the login form.
+
+        findViews();
+        initViews();
+        initHttpModule();
+    }
+
+    private void findViews() {
         mEmailView = (AutoCompleteTextView) findViewById(R.id.email);
+        mNameView = (EditText) findViewById(R.id.name);
+        mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
+        mLoginFormView = findViewById(R.id.login_form);
+        mProgressView = findViewById(R.id.login_progress);
+    }
+
+    private void initViews() {
         populateAutoComplete();
 
-        mPasswordView = (EditText) findViewById(R.id.password);
-        mPasswordView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+        mNameView.setOnEditorActionListener(new TextView.OnEditorActionListener() {
             @Override
             public boolean onEditorAction(TextView textView, int id, KeyEvent keyEvent) {
                 if (id == R.id.login || id == EditorInfo.IME_NULL) {
@@ -82,16 +101,16 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             }
         });
 
-        Button mEmailSignInButton = (Button) findViewById(R.id.email_sign_in_button);
         mEmailSignInButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
                 attemptLogin();
             }
         });
+    }
 
-        mLoginFormView = findViewById(R.id.login_form);
-        mProgressView = findViewById(R.id.login_progress);
+    private void initHttpModule() {
+        mHttpClient = new HttpClient(this, CommonUtils.SERVER_URL, null);
     }
 
     private void populateAutoComplete() {
@@ -156,19 +175,22 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
         // Reset errors.
         mEmailView.setError(null);
-        mPasswordView.setError(null);
+        mNameView.setError(null);
 
         // Store values at the time of the login attempt.
         String email = mEmailView.getText().toString();
-        String password = mPasswordView.getText().toString();
+        String name = mNameView.getText().toString();
 
         boolean cancel = false;
         View focusView = null;
 
-        // Check for a valid password, if the user entered one.
-        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
-            mPasswordView.setError(getString(R.string.error_invalid_password));
-            focusView = mPasswordView;
+        // Check for a valid name, if the user entered one.
+        if (TextUtils.isEmpty(name)) {
+            // 이름을 빈 상태로 넘겼을 경우 이메일의 앞 아이디를 이름으로 설정한다.
+            name = email.split("@")[0];
+        } else if (!TextUtils.isEmpty(name) && !isNameValid(name)) {
+            mNameView.setError(getString(R.string.error_invalid_name));
+            focusView = mNameView;
             cancel = true;
         }
 
@@ -191,7 +213,7 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserLoginTask(email, password);
+            mAuthTask = new UserLoginTask(email, name);
             mAuthTask.execute((Void) null);
         }
     }
@@ -201,9 +223,9 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         return email.contains("@");
     }
 
-    private boolean isPasswordValid(String password) {
+    private boolean isNameValid(String name) {
         //TODO: Replace this with your own logic
-        return password.length() > 4;
+        return name.length() > 2;
     }
 
     /**
@@ -332,33 +354,68 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
 
         private final String mEmail;
-        private final String mPassword;
+        private final String mName;
 
-        UserLoginTask(String email, String password) {
+        UserLoginTask(String email, String name) {
             mEmail = email;
-            mPassword = password;
+            mName = name;
         }
 
         @Override
         protected Boolean doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
+            boolean result = false;
+            IsRegisterUser request = new IsRegisterUser(mEmail);
 
             try {
-                // Simulate network access.
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
+                CommonResponse response = mHttpClient.sendRequest("/api/isRegistered", IsRegisterUser.class, CommonResponse.class, request);
+
+                if (response.getResultCode().equals("417")) {
+                    // 미가입 유저
+                    result = processRegister();
+                } else if (response.getResultCode().equals("200")) {
+                    // 기가입 유저
+                    result = processUpdateUserInfo();
+                } else {
+                    // TODO :: 예외 에러코드 처리
+                    result = false;
+                }
+
+            } catch (ConnectException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return result;
+        }
+
+        private boolean processRegister() {
+            String userToken = ConfigSettingPreferences.getInstance(LoginActivity.this).getPrefsUserToken();
+
+            try {
+                RegisterRequest registerRequest = new RegisterRequest(mEmail, mName, userToken, "A");
+                CommonResponse response = mHttpClient.sendRequest("/api/registerRequest", RegisterRequest.class, CommonResponse.class, registerRequest);
+
+                if (response.getResultCode().equals("200")) {
+                    // 미가입 유저 -> 가입완료
+                    return true;
+                } else if (response.getResultCode().equals("417")) {
+                    // 미가입 유저 -> 가입실패
+                    return false;
+                } else {
+                    // TODO :: 예외 에러코드 처리
+                    return false;
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
                 return false;
             }
 
-            for (String credential : DUMMY_CREDENTIALS) {
-                String[] pieces = credential.split(":");
-                if (pieces[0].equals(mEmail)) {
-                    // Account exists, return true if the password matches.
-                    return pieces[1].equals(mPassword);
-                }
-            }
+        }
 
-            // TODO: register the new account here.
+        private boolean processUpdateUserInfo() {
+            // TODO :: 기가입 유저일 때 Device의 token 값이 변경되었을 경우 token 업데이트 로직 개발 필요
+
             return true;
         }
 
@@ -368,10 +425,11 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             showProgress(false);
 
             if (success) {
+                ConfigSettingPreferences.getInstance(LoginActivity.this).setPrefsUserEmail(mEmail);
+                startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
             } else {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
+                mNameView.requestFocus();
             }
         }
 
