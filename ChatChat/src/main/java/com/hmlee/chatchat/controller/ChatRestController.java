@@ -34,11 +34,20 @@ public class ChatRestController extends BaseController {
     private MessageSource messageSource;
     
 	@RequestMapping(value = "/isRegistered", method = RequestMethod.POST)
-	public boolean isRegistered(@RequestBody Map<String, String> requestBody, Locale locale) throws Exception {
+	public JsonResult isRegistered(@RequestBody Map<String, String> requestBody, Locale locale) throws Exception {
 		logger.info("[====== Start of isRegistered method ======]");
 		logger.debug("body => {}", requestBody);
-		boolean result = restService.isRegisteredAddress(requestBody.get("email"));
-
+		
+		JsonResult result = new JsonResult();
+		
+		if (restService.isRegisteredAddress(requestBody.get("email"))) {
+			result.setResultCode(Constants.ResponseCode.SUCCESS);
+			result.setResultMessage(messageSource.getMessage("app.api.isRegisterUser.true", null, locale));
+		} else {
+			result.setResultCode(Constants.ResponseCode.FAILED);
+			result.setResultMessage(messageSource.getMessage("app.api.isRegisterUser.false", null, locale));
+		}
+		
 		logger.info("[====== End of isRegistered method ======]");
 		return result;
 	}

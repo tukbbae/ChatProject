@@ -18,6 +18,6 @@ import com.hmlee.chatchat.model.domain.User;
 @Repository
 public interface FriendRepository extends JpaRepository<Friend, Long> {
 
-	@Query("SELECT f FROM FRIEND_LIST f WHERE f.userEmail = :userEmail")
+	@Query("SELECT f.friend FROM FRIEND_LIST f WHERE f.userEmail = :userEmail")
 	public List<User> findFriendListByUserId(@Param("userEmail") String userEmail);
 }
