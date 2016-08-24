@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import com.hmlee.chatchat.core.base.BaseController;
 import com.hmlee.chatchat.core.constant.Constants;
 import com.hmlee.chatchat.model.AckRequestBody;
+import com.hmlee.chatchat.model.FriendResult;
 import com.hmlee.chatchat.model.JsonResult;
 import com.hmlee.chatchat.model.MessageBody;
 import com.hmlee.chatchat.model.UnreadMessage;
@@ -102,14 +103,18 @@ public class ChatRestController extends BaseController {
 		return result;
 	}
 	
-	// TODO :: /api/getFriendList API 개발중
     @RequestMapping(value = "/getFriendList", method = RequestMethod.POST)
-    public List<User> getFriendList(@RequestBody Map<String, String> requestBody, Locale locale) throws  Exception {
+    public FriendResult getFriendList(@RequestBody Map<String, String> requestBody, Locale locale) throws  Exception {
     	logger.debug("body => {}", requestBody);
-    	return restService.getFriendList(requestBody.get("userEmail"));
+    	
+    	FriendResult result = new FriendResult();
+    	ArrayList<User> friendList = (ArrayList<User>) restService.getFriendList(requestBody.get("userEmail"));
+    	
+    	result.setFriendList(friendList);
+    	
+    	return result;
     }
 	
-	// TODO :: /api/addFriendRequest API 개발중
     @RequestMapping(value = "/addFriendRequest", method = RequestMethod.POST)
     public JsonResult addFriendRequest(@RequestBody Map<String, String> requestBody, Locale locale) throws Exception {
     	logger.info("[====== Start of addFriendRequest method ======]");

@@ -8,6 +8,7 @@ import com.hmlee.chatchat.core.base.BaseObject;
 public class JsonResult extends BaseObject {
 
     private static final long serialVersionUID = -8014849606659869095L;
+    
     /** The result code */
     private int resultCode;
 
