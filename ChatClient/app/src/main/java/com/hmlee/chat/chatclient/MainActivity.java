@@ -206,7 +206,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(Boolean success) {
             if (success) {
-                setFragment();
+
             } else {
 
             }
