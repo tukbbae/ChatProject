@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 public class FCMClient {
 
 	// Firebase FCM API Key
-	private final static String API_KEY = "AIzaSyBh5oxRvItWrfLVF9e0noRTMFOpiZ6llyk";
+	private final static String API_KEY = "AIzaSyAzpJeOPsAiN5HUiUnyEg_VQaKwR06PGTQ";
 	private static FCMClient fcmClient = null;
 
 	private static FcmRequestBody request;
