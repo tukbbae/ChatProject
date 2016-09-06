@@ -2,6 +2,7 @@ package com.hmlee.chat.chatclient;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.design.widget.TabLayout;
@@ -19,7 +20,16 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.hmlee.chat.chatclient.data.Contact;
+import com.hmlee.chat.chatclient.http.HttpClient;
+import com.hmlee.chat.chatclient.http.model.GetFriendList;
+import com.hmlee.chat.chatclient.http.model.GetFriendListResponse;
+import com.hmlee.chat.chatclient.utils.CommonUtils;
 import com.hmlee.chat.chatclient.utils.ConfigSettingPreferences;
+
+import java.io.IOException;
+import java.net.ConnectException;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,6 +41,14 @@ public class MainActivity extends AppCompatActivity {
     // Firebase instance variables
     private FirebaseAuth mFirebaseAuth;
     private FirebaseUser mFirebaseUser;
+
+    // HTTP Client
+    private HttpClient mHttpClient;
+
+    private GetFriendListTask mFriendTask;
+
+    // TODO :: 주소록 DB 생성 후 삭제 필요
+    public static ArrayList<Contact> sContactList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +73,8 @@ public class MainActivity extends AppCompatActivity {
 //            }
 //        }
         checkLogin();
+        initHttpModule();
+        getFriendList();
         setFragment();
     }
 
@@ -66,6 +86,16 @@ public class MainActivity extends AppCompatActivity {
             finish();
             return;
         }
+    }
+
+    private void initHttpModule() {
+        mHttpClient = new HttpClient(this, CommonUtils.SERVER_URL, null);
+    }
+
+    private void getFriendList() {
+        sContactList = new ArrayList<Contact>();
+        mFriendTask = new GetFriendListTask("tukbbae@gmail.com");
+        mFriendTask.execute((Void) null);
     }
 
     private void setFragment() {
@@ -131,6 +161,56 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
+        }
+    }
+
+    public class GetFriendListTask extends AsyncTask<Void, Void, Boolean> {
+        private final String mUserEmail;
+
+        public GetFriendListTask(String mUserEmail) {
+            this.mUserEmail = mUserEmail;
+        }
+
+        protected Boolean doInBackground(Void... params) {
+            boolean result = false;
+
+            GetFriendList request = new GetFriendList(mUserEmail);
+
+            try {
+                GetFriendListResponse response = mHttpClient.sendRequest("/api/getFriendList", GetFriendList.class, GetFriendListResponse.class, request);
+
+
+                if (response != null) {
+                    for (int i = 0; i < response.getFriendList().size(); i++) {
+                        String name = response.getFriendList().get(i).getName();
+                        String email = response.getFriendList().get(i).getEmail();
+                        String token = response.getFriendList().get(i).getToken();
+
+                        Contact contact = new Contact(name, email, token);
+
+                        sContactList.add(contact);
+                    }
+                }
+
+                result = true;
+
+            } catch (ConnectException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return result;
+        }
+
+        @Override
+        protected void onPostExecute(Boolean success) {
+            if (success) {
+                setFragment();
+            } else {
+
+            }
+
         }
     }
 }
